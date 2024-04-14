@@ -28,42 +28,46 @@ const Explorer = ({ selectedUserId, users, group, algoEff }) => {
     []
   );
 
-  const xScale = useMemo(
+  const { xScale, yScale } = useMemo(() => {
+    const xScale = d3
+      .scaleLinear()
+      .domain(d3.extent(users, (d) => d.x0_pred))
+      .range([0, layout.w]);
+
+    const yScale = d3
+      .scaleLinear()
+      .domain(d3.extent(users, (d) => d.x1_pred))
+      .range([layout.h, 0]);
+
+    return { xScale, yScale };
+  }, [users, layout.w, layout.h]);
+
+  const genderColorScale = useMemo(
+    () => d3.scaleOrdinal().domain(["M", "F"]).range(["blue", "red"]),
+    []
+  );
+
+  const stereotypingColorScale = useMemo(
     () =>
       d3
         .scaleLinear()
-        .domain(d3.extent(users.map((d) => d.x0_pred)))
-        .range([0, layout.w]),
-    [users, layout.w]
+        .domain([
+          d3.min(users, (d) => d.stereotyping),
+          0,
+          d3.max(users, (d) => d.stereotyping),
+        ])
+        .range(["blue", "gray", "red"]),
+    [users]
   );
 
-  const yScale = useMemo(
+  const miscalibrationColorScale = useMemo(
     () =>
       d3
         .scaleLinear()
-        .domain(d3.extent(users.map((d) => d.x1_pred)))
-        .range([layout.h, 0]),
-    [users, layout.h]
+        .domain([0, d3.max(users, (d) => d.error)])
+        .range(["lightgray", "red"]),
+    [users]
   );
-
-  const genderColorScale = d3
-    .scaleOrdinal()
-    .domain(["M", "F"])
-    .range(["blue", "red"]);
-
-  const stereotypingColorScale = d3
-    .scaleLinear()
-    .domain([
-      d3.min(users.map((d) => d.stereotyping)),
-      0,
-      d3.max(users.map((d) => d.stereotyping)),
-    ])
-    .range(["blue", "gray", "red"]);
-
-  const miscalibrationColorScale = d3
-    .scaleLinear()
-    .domain([0, d3.max(users.map((d) => d.error))])
-    .range(["lightgray", "red"]);
 
   const filterBubbleRadiusScale = d3
     .scaleLinear()
@@ -110,8 +114,7 @@ const Explorer = ({ selectedUserId, users, group, algoEff }) => {
     // Set initial zoom level
     // svg.call(zoomBehavior.transform, d3.zoomIdentity.translate(0, 0).scale(0.75));
 
-    const usersGroup = g
-      .selectAll(".g_user")
+    g.selectAll(".g_user")
       .data(users, (d) => d.userID)
       .join(
         (enter) =>
