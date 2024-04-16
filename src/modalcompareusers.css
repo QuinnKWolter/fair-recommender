@@ -1,0 +1,25 @@
+.user-info {
+    display: flex;
+  }
+  
+  .person-icon {
+    width: 80px; /* Adjust icon size as needed */
+    height: 80px; /* Adjust icon size as needed */
+    margin-right: 1px; /* Adjust spacing between icon and details */
+  }
+
+  .user-details p {
+    margin: 1px 0; /* Adjust the margin to reduce space between lines */
+  }
+
+  .user-slider-container {
+    margin-top: 1px; /* Adjust the top margin as needed */
+    
+  }
+  
+  .user-slider-container > div {
+    margin-bottom: 1px; /* Adjust the bottom margin of each slider container */
+    margin-right: 40px;
+    margin-left: 10px;
+  }
+  
