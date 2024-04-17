@@ -9,11 +9,13 @@ const style = {
   top: "50%",
   left: "50%",
   transform: "translate(-50%, -50%)",
-  width: 400,
+  width: 600, // Maintain a fixed width
   bgcolor: "background.paper",
   boxShadow: 24,
   p: 4,
   borderRadius: 2,
+  maxHeight: "80vh", // Limit the maximum height of the modal
+  overflowY: "auto", // Enable vertical scrolling within the modal
 };
 
 export default function CustomModal({ open, handleClose, title, content }) {
@@ -28,7 +30,7 @@ export default function CustomModal({ open, handleClose, title, content }) {
         <Typography id="modal-modal-title" variant="h6" component="h2">
           {title}
         </Typography>
-        <Typography id="modal-modal-description" sx={{ mt: 2 }}>
+        <Typography id="modal-modal-description" sx={{ mt: 2 }} component="div">
           {content}
         </Typography>
         <Button

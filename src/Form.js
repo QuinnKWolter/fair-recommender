@@ -94,7 +94,6 @@ const Form = ({ users }) => {
         borderRadius: 2,
         padding: 2,
         overflow: "auto",
-        zIndex: "tooltip",
       }}
     >
       <Box sx={{ marginY: 1 }}>

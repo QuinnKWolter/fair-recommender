@@ -26,7 +26,6 @@ const List = styled.ul`
 const ListItem = styled.li`
   margin-bottom: 5px;
   font-size: 14px;
-  color: #666;
 `;
 
 const Legend = styled.div`
@@ -37,7 +36,7 @@ const ColorSwatch = styled.span`
   display: inline-block;
   width: 20px;
   height: 20px;
-  background-color: ${(props) => props.color};
+  background: ${(props) => props.color};
   border: 1px solid #ccc;
   margin-right: 5px;
 `;
@@ -48,6 +47,16 @@ const LegendItem = styled.div`
   margin-bottom: 5px;
 `;
 
+const Description = styled.span`
+  margin-left: 5px;
+`;
+
+const SVGIcon = styled.svg`
+  width: 20px;
+  height: 20px;
+  margin-right: 5px;
+`;
+
 export default function LegendWidget() {
   return (
     <WidgetContainer>
@@ -55,41 +64,45 @@ export default function LegendWidget() {
       <List>
         <ListItem>Dr. Yu-Ru Lin</ListItem>
         <ListItem>Yongsu Ahn</ListItem>
+        <ListItem>Quinn K Wolter</ListItem>
         <ListItem>Jonilyn Dick</ListItem>
         <ListItem>Janet Dick</ListItem>
-        <ListItem>Quinn K Wolter</ListItem>
       </List>
       <Legend>
         <Title>Legend</Title>
         <LegendItem>
-          <ColorSwatch color="blue" /> Male (Blue)
-        </LegendItem>
-        <LegendItem>
-          <ColorSwatch color="red" /> Female (Red)
-        </LegendItem>
-        <LegendItem>
-          <ColorSwatch color="gray" /> Default/No Data (Gray)
-        </LegendItem>
-        <LegendItem>
-          <ColorSwatch color="lightgray" /> Miscalibration (Light Gray to Red)
+          <ColorSwatch color="#4676f4" />
+          <ColorSwatch color="#ce4e6c" />
+          <Description>Gender: Male (Blue), Female (Red)</Description>
         </LegendItem>
         <LegendItem>
           <ColorSwatch
-            color="blue"
-            style={{
-              background: "linear-gradient(to right, blue, lightgray, red)",
-            }}
-          />{" "}
-          Stereotyping (Blue to Red)
+            style={{ background: "linear-gradient(to right, #111, #eee)" }}
+          />
+          <Description>Miscalibration: Scale (Black to White)</Description>
         </LegendItem>
         <LegendItem>
-          <ColorSwatch
-            color="blue"
-            style={{
-              background: "linear-gradient(to right, blue, lightgray, red)",
-            }}
-          />{" "}
-          Filter Bubble (Blue to Red)
+          <SVGIcon viewBox="0 0 20 20">
+            <circle
+              cx="10"
+              cy="10"
+              r="7"
+              fill="none"
+              stroke="black"
+              strokeWidth="2"
+            />
+          </SVGIcon>
+          <Description>
+            Filter Bubble Effect: Visualized by ring size
+          </Description>
+        </LegendItem>
+        <LegendItem>
+          <SVGIcon viewBox="0 0 20 20">
+            <rect x="3" y="9" width="14" height="2" fill="black" />
+          </SVGIcon>
+          <Description>
+            Stereotyping Strength: Visualized by path length
+          </Description>
         </LegendItem>
       </Legend>
     </WidgetContainer>
