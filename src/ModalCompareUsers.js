@@ -1,5 +1,7 @@
 import React, { useState } from "react";
-import RangeSlider from "./RangeSlider"; 
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import RangeSlider from "./RangeSlider";
 import UserCard from "./UserCard";
 
 const genres = [
@@ -25,20 +27,8 @@ const genres = [
 ];
 
 const users = [
-  {
-    userID: "1",
-    gender: "F",
-    age: "1",
-    occupation: "10",
-    zip_code: "48067",
-  },
-  {
-    userID: "5",
-    gender: "M",
-    age: "25",
-    occupation: "20",
-    zip_code: "55455",
-  },
+  { userID: "1", gender: "F", age: "1", occupation: "10", zip_code: "48067" },
+  { userID: "5", gender: "M", age: "25", occupation: "20", zip_code: "55455" },
 ];
 
 function ModalCompareUsers() {
@@ -52,28 +42,47 @@ function ModalCompareUsers() {
   };
 
   return (
-    <div style={{ display: "flex", whiteSpace: "nowrap" }}>
-      {users.map((user, index) => (
-        <div key={user.userID} style={{ marginRight: "20px" }}>
-          <div className="user-slider-container" style={{ marginBottom: "20px", marginLeft: "20px" }}>
-            <UserCard user={user} />
-            <div style={{ maxHeight: "400px", overflowY: "auto", overflowX: "hidden" }}>
-              {genres.map((genre) => (
-                <div key={genre.id} style={{ margin: "10px" }}>
-                  <h3>{genre.name}</h3>
-                  <RangeSlider
-                    value={values[`${user.userID}-${genre.id}`] || 50}
-                    onChange={(event, newValue) =>
-                      handleChange(user.userID, genre.id, newValue)
-                    }
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+    <Box
+      sx={{
+        display: "flex",
+        flexWrap: "wrap", // Allow content to wrap if necessary
+        justifyContent: "center", // Center content horizontally
+        alignItems: "center", // Center content vertically
+        padding: "20px",
+        gap: "20px", // Adds space between child components
+      }}
+    >
+      {users.map((user) => (
+        <Box
+          key={user.userID}
+          sx={{
+            display: "flex",
+            flexDirection: "column", // Stack content vertically
+            alignItems: "center", // Center content horizontally within each user box
+            maxWidth: 300, // Restrict maximum width to prevent stretching
+            overflow: "auto", // Allow vertical scrolling within each user box
+            padding: 2,
+            maxHeight: "90vh",
+          }}
+        >
+          <Typography
+            variant="h6"
+            sx={{ marginBottom: 2 }}
+          >{`User ${user.userID}`}</Typography>
+          <UserCard user={user} />
+          {genres.map((genre) => (
+            <RangeSlider
+              key={genre.id}
+              label={genre.name}
+              value={values[`${user.userID}-${genre.id}`] || 50}
+              onChange={(e, newValue) =>
+                handleChange(user.userID, genre.id, newValue)
+              }
+            />
+          ))}
+        </Box>
       ))}
-    </div>
+    </Box>
   );
 }
 

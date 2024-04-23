@@ -7,16 +7,38 @@ body {
   overflow: hidden; /* Prevent scrolling */
 }
 
-.user_circle {
-  fill-opacity: 0.4;
-  stroke: black;
-  stroke-width: 2;
+.user-info {
+  display: flex;
 }
 
-.user_circle_bubble {
-  fill: none;
-  stroke-dasharray: 2, 1;
-  stroke-width: 0.5;
+.person-icon {
+  width: 30px; /* Adjust icon size as needed */
+  height: 30px; /* Adjust icon size as needed */
+  margin-right: 10px; /* Adjust spacing between icon and details */
+}
+
+.user-info {
+  display: flex;
+}
+
+.person-icon {
+  width: 80px; /* Adjust icon size as needed */
+  height: 80px; /* Adjust icon size as needed */
+  margin-right: 1px; /* Adjust spacing between icon and details */
+}
+
+.user-details p {
+  margin: 1px 0; /* Adjust the margin to reduce space between lines */
+}
+
+.user-slider-container {
+  margin-top: 1px; /* Adjust the top margin as needed */
+}
+
+.user-slider-container > div {
+  margin-bottom: 1px; /* Adjust the bottom margin of each slider container */
+  margin-right: 40px;
+  margin-left: 10px;
 }
 
 
