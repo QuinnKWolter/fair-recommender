@@ -22,11 +22,16 @@ const theme = createTheme({
 
 function App() {
   const [users, setUsers] = useState([]);
+  const [selectedUserId, setSelectedUserId] = useState(null);
   const [modalState, setModalState] = useState({
     userDetail: false,
     compareUsers: false,
     information: false,
   });
+
+  useEffect(() => {
+    console.log("Selected User ID changed to:", selectedUserId);
+  }, [selectedUserId]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -71,9 +76,18 @@ function App() {
         content={<ModalInformation />}
       />
       <div className="App">
-        {users.length > 0 ? <Explorer users={users} /> : <div>Loading...</div>}
+        {/*users.length > 0 ? <Explorer users={users} /> : <div>Loading...</div>*/}
+        <Explorer
+          users={users}
+          selectedUserId={selectedUserId}
+          setSelectedUserId={setSelectedUserId}
+        />
         <LegendWidget />
-        <Form users={users} />
+        <Form
+          users={users}
+          selectedUserId={selectedUserId}
+          setSelectedUserId={setSelectedUserId}
+        />
       </div>
     </ThemeProvider>
   );

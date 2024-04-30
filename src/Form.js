@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Dropdown from "./Dropdown";
 import Paper from "@mui/material/Paper";
 import Box from "@mui/material/Box";
@@ -76,11 +76,40 @@ const genreOptions = [
   { value: "western", label: "Western" },
 ];
 
-const Form = ({ users }) => {
-  const userIdOptions = users.map((user) => ({
+const Form = ({ users, selectedUserId, setSelectedUserId }) => {
+  // States for filters
+  const [genderFilter, setGenderFilter] = useState("");
+  const [ageFilter, setAgeFilter] = useState("");
+  const [occupationFilter, setOccupationFilter] = useState("");
+  const [locationFilter, setLocationFilter] = useState("");
+  const [filteredUsers, setFilteredUsers] = useState(users);
+
+  // Update filtered users whenever the filters or users change
+  useEffect(() => {
+    let results = users;
+    if (genderFilter) {
+      results = results.filter((user) => user.gender === genderFilter);
+    }
+    if (ageFilter) {
+      results = results.filter((user) => user.age === ageFilter);
+    }
+    if (occupationFilter) {
+      results = results.filter((user) => user.occupation === occupationFilter);
+    }
+    if (locationFilter) {
+      results = results.filter((user) => user.zip_code === locationFilter);
+    }
+    setFilteredUsers(results);
+  }, [users, genderFilter, ageFilter, occupationFilter, locationFilter]);
+
+  const userIdOptions = filteredUsers.map((user) => ({
     value: user.userID,
     label: user.userID,
   }));
+
+  const handleUserIdChange = (newValue) => {
+    setSelectedUserId(newValue ? newValue.value : null);
+  };
 
   return (
     <Paper
@@ -97,12 +126,60 @@ const Form = ({ users }) => {
       }}
     >
       <Box sx={{ marginY: 1 }}>
-        <Dropdown label="User ID" options={userIdOptions} />
-        <Dropdown label="Age" options={ageOptions} />
-        <Dropdown label="Gender" options={genderOptions} />
-        <Dropdown label="Location" options={locationOptions} />
-        <Dropdown label="Occupation" options={occupationOptions} />
-        <Dropdown label="Top Genre" options={genreOptions} />
+        <Dropdown
+          label="User ID"
+          options={userIdOptions}
+          onChange={handleUserIdChange}
+          value={
+            userIdOptions.find((option) => option.value === selectedUserId) ||
+            null
+          }
+        />
+        <Dropdown
+          label="Gender"
+          options={[
+            { value: "M", label: "Male" },
+            { value: "F", label: "Female" },
+          ]}
+          onChange={(newValue) =>
+            setGenderFilter(newValue ? newValue.value : "")
+          }
+        />
+        <Dropdown
+          label="Age"
+          options={[
+            { value: "1", label: "Under 18" },
+            { value: "18", label: "18-24" },
+            { value: "25", label: "25-34" },
+            { value: "35", label: "35-44" },
+            { value: "45", label: "45-54" },
+            { value: "55", label: "55-64" },
+            { value: "65", label: "65+" },
+          ]}
+          onChange={(newValue) => setAgeFilter(newValue ? newValue.value : "")}
+        />
+        <Dropdown
+          label="Occupation"
+          options={[
+            { value: "10", label: "K-12 Student" },
+            { value: "16", label: "Self-Employed" },
+            // Add other occupations as necessary
+          ]}
+          onChange={(newValue) =>
+            setOccupationFilter(newValue ? newValue.value : "")
+          }
+        />
+        <Dropdown
+          label="Location"
+          options={[
+            { value: "48067", label: "48067" },
+            { value: "70072", label: "70072" },
+            // Add other ZIP codes as necessary
+          ]}
+          onChange={(newValue) =>
+            setLocationFilter(newValue ? newValue.value : "")
+          }
+        />
         <Button variant="contained" color="success" sx={{ mt: 2 }}>
           Search
         </Button>

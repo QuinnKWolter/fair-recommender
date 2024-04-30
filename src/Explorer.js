@@ -15,11 +15,12 @@ const ExplorerWrapper = styled.div.attrs({
   //grid-area: e; // This is the grid area for the explorer component? Necessary still, or nah?
 `;
 
-const Explorer = ({ selectedUserId, users, algoEff }) => {
+const Explorer = ({ users, selectedUserId, setSelectedUserId, algoEff }) => {
   const [group, setGroup] = useState("gender");
   const [tooltipData, setTooltipData] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [isTooltipVisible, setIsTooltipVisible] = useState(false);
+
   const tooltipTimeoutRef = useRef(null);
   const svgRef = useRef(null);
   const gRef = useRef(null);
@@ -53,15 +54,6 @@ const Explorer = ({ selectedUserId, users, algoEff }) => {
     []
   );
 
-  /*const stereotypingColorScale = useMemo(
-    () =>
-      d3
-        .scaleLinear()
-        .domain([-0.3113570983334862, 0, 0.5161268476441839])
-        .range(["#440154", "#21908C", "#FDE725"]), // Viridis - deep purple
-    [users]
-  );*/
-
   const stereotypingLengthScale = useMemo(() => {
     const maxStereotypingAbs = d3.max(users, (d) => Math.abs(d.stereotyping));
     return d3.scaleLinear().domain([0, maxStereotypingAbs]).range([2, 10]); // Example range from 2 to 10 units
@@ -80,23 +72,12 @@ const Explorer = ({ selectedUserId, users, algoEff }) => {
     [users]
   );
 
-  const filterBubbleRadiusScale = d3
-    .scaleLinear()
-    .domain([0, d3.max(users.map((d) => d.filter_bubble))])
-    .range([layout.circle.r - 1, layout.circle.r + 1]);
-
-  /*const filterBubbleColorScale = useMemo(
-    () =>
-      d3
-        .scaleLinear()
-        .domain([
-          d3.min(users.map((d) => d.filter_bubble)),
-          0,
-          d3.max(users.map((d) => d.filter_bubble)),
-        ])
-        .range(["#ffffcc", "#c2e699", "#756bb1"]), // Yellow to violet
-    [users]
-  );*/
+  const filterBubbleRadiusScale = useMemo(() => {
+    return d3
+      .scaleLinear()
+      .domain([0, d3.max(users.map((d) => d.filter_bubble))])
+      .range([layout.circle.r - 1, layout.circle.r + 1]);
+  }, [users, layout.circle.r]);
 
   const filterBubbleBorderScale = useMemo(
     () =>
@@ -111,7 +92,7 @@ const Explorer = ({ selectedUserId, users, algoEff }) => {
     return [
       `User ID: ${d.userID}`,
       `Gender: ${d.gender}`,
-      `Miscalibration (Error): ${Number(d.error).toFixed(2)}`,
+      `Miscalibration: ${Number(d.error).toFixed(2)}`,
       `Stereotyping: ${Number(d.stereotyping).toFixed(2)}`,
       `Filter Bubble: ${Number(d.filter_bubble).toFixed(2)}`,
       "Occupation: Placeholder",
@@ -148,6 +129,16 @@ const Explorer = ({ selectedUserId, users, algoEff }) => {
     if (tooltipTimeoutRef.current) {
       clearTimeout(tooltipTimeoutRef.current);
     }
+  };
+
+  useEffect(() => {
+    console.log("Explorer sees selectedUserId as:", selectedUserId);
+  }, [selectedUserId]);
+
+  // Handling user clicks, log the new selection
+  const handleUserClick = (userId) => {
+    console.log("User clicked in Explorer:", userId);
+    setSelectedUserId((prev) => (prev === userId ? null : userId));
   };
 
   useEffect(() => {
@@ -218,6 +209,18 @@ const Explorer = ({ selectedUserId, users, algoEff }) => {
 
   useEffect(() => {
     const g = d3.select(gRef.current);
+    const hasSelection = selectedUserId != null;
+
+    // Utility to apply mouse events and handle clicks
+    const applyMouseEvents = (selection) => {
+      selection
+        .on("mouseover", (event, d) => {
+          const tooltipData = getTooltipData(d);
+          showTooltip(tooltipData, { x: event.clientX, y: event.clientY });
+        })
+        .on("mouseout", hideTooltip)
+        .on("click", (event, d) => handleUserClick(d.userID));
+    };
 
     const gUsers = g
       .selectAll(".g_user")
@@ -235,10 +238,14 @@ const Explorer = ({ selectedUserId, users, algoEff }) => {
               const userGroup = d3.select(this);
               userGroup
                 .append("circle")
-                .attr("class", "user_circle")
-                .attr("r", layout.circle.r)
+                .attr("class", "selection_indicator")
+                .attr("r", layout.circle.r * 2)
                 .attr("cx", 0)
-                .attr("cy", 0);
+                .attr("cy", 0)
+                .style("fill", "none")
+                .style("stroke", "red")
+                .style("stroke-width", 2)
+                .style("visibility", "hidden");
             }),
         (update) =>
           update
@@ -251,27 +258,29 @@ const Explorer = ({ selectedUserId, users, algoEff }) => {
         (exit) => exit.remove()
       );
 
-    // All users
-    gUsers.selectAll("circle").remove();
-    gUsers.selectAll("path").remove();
+    // Update visibility and opacity based on selection state
+    gUsers
+      .selectAll(".selection_indicator")
+      .style("visibility", (d) =>
+        d.userID === selectedUserId ? "visible" : "hidden"
+      );
 
-    // User token circles - how do we want default styling to convey information? I've changed from grey to using gender.
+    gUsers.style("opacity", (d) =>
+      selectedUserId == null || d.userID === selectedUserId ? 1 : 0.2
+    );
+
+    // Append and style user circles
+    gUsers.selectAll(".user_circle").remove();
     gUsers
       .append("circle")
       .attr("class", "user_circle")
       .attr("cx", 0)
       .attr("cy", 0)
       .attr("r", layout.circle.r)
-      .style("fill", (d) => genderColorScale(d.gender))
-      //.style("fill", "gray")
-      //.style("fill-opacity", 0.4)
-      .on("mouseover", (event, d) => {
-        const tooltipData = getTooltipData(d);
-        showTooltip(tooltipData, { x: event.clientX, y: event.clientY });
-      })
-      .on("mouseout", hideTooltip);
+      .style("fill", (d) => genderColorScale(d.gender));
 
-    // User rings - how do we want default styling to convey filter bubbles, miscalibration, stereotyping, and gender?
+    // Handle user rings
+    gUsers.selectAll(".user_circle_bubble").remove();
     gUsers
       .append("circle")
       .attr("class", "user_circle_bubble")
@@ -279,74 +288,30 @@ const Explorer = ({ selectedUserId, users, algoEff }) => {
       .attr("cy", 0)
       .attr("r", (d) => filterBubbleRadiusScale(d.filter_bubble))
       .style("fill", "none")
-      // .style('stroke-dasharray', '2,1')
       .style("stroke", (d) => miscalibrationColorScale(d.error))
-      //.style("stroke", (d) => filterBubbleColorScale(d.filter_bubble))
-      .style("stroke-width", (d) => filterBubbleBorderScale(d.filter_bubble))
-      // .style('fill-opacity', 0.4)
-      .on("mouseover", (event, d) => {
-        const tooltipData = getTooltipData(d);
-        showTooltip(tooltipData, { x: event.clientX, y: event.clientY });
-      })
-      .on("mouseout", hideTooltip);
+      .style("stroke-width", (d) => filterBubbleBorderScale(d.filter_bubble));
 
-    // User stereotype path - gonna color this based on the stereotype value, we can see what we think?
+    // User stereotype path
+    gUsers.selectAll("path.link").remove();
     gUsers
-      .append("path") // Append path
+      .append("path")
       .attr("class", "link")
       .style("stroke", (d) => miscalibrationColorScale(d.error))
-      // .style("stroke", (d) => stereotypingColorScale(d.stereotyping)) // Original based on stereotype value
       .style("stroke-width", 0.6)
       .attr("d", (d) => {
         const theta = Math.atan2(
           d.x1_actual - d.x1_pred,
           d.x0_actual - d.x0_pred
         );
-        const length = stereotypingLengthScale(Math.abs(d.stereotyping)); // Use the scale to determine length
+        const length = stereotypingLengthScale(Math.abs(d.stereotyping));
         return `M 0,0 L ${length * Math.cos(theta)},${
           length * Math.sin(theta)
         }`;
-      })
-      .on("mouseover", (event, d) => {
-        const tooltipData = getTooltipData(d);
-        showTooltip(tooltipData, { x: event.clientX, y: event.clientY });
-      })
-      .on("mouseout", hideTooltip);
-
-    gUsers.exit().remove();
-
-    // Selected users
-    const gSelectedUsers = d3
-      .select(svgRef.current)
-      .selectAll(".g_selected_user")
-      .data(users.filter((d) => d.userID == selectedUserId));
-
-    gSelectedUsers.selectAll("circle").remove();
-
-    gSelectedUsers
-      .enter()
-      .append("g")
-      .attr("class", "g_selected_user")
-      .attr("transform", function (d) {
-        return "translate(" + xScale(d.x0_pred) + "," + yScale(d.x1_pred) + ")";
       });
 
-    // User token dots - Is this fine for conveying miscalibration?
-    // Why were min and max not working for the scale...?
-    gUsers
-      .append("circle")
-      .attr("class", "user_circle")
-      .attr("cx", 0)
-      .attr("cy", 0)
-      .attr("r", layout.circle.r / 4)
-      .style("fill", (d) => miscalibrationColorScale(d.error))
-      .on("mouseover", (event, d) => {
-        const tooltipData = getTooltipData(d);
-        showTooltip(tooltipData, { x: event.clientX, y: event.clientY });
-      })
-      .on("mouseout", hideTooltip);
+    gUsers.classed("selected", (d) => d.userID === selectedUserId);
 
-    gSelectedUsers.selectAll("circle").remove();
+    gUsers.exit().remove();
 
     /*
     // Update color and stroke based on group
@@ -382,8 +347,9 @@ const Explorer = ({ selectedUserId, users, algoEff }) => {
       })
       .style("stroke-width", (d) => (group === "gender" ? 2 : 0));*/
 
-    gSelectedUsers.exit().remove();
-  }, [users, group, xScale, yScale, layout]);
+    // Reapply events to the entire group, including new circles
+    gUsers.call(applyMouseEvents);
+  }, [users, selectedUserId, group, xScale, yScale, layout]);
 
   return (
     <ExplorerWrapper>

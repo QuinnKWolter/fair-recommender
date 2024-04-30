@@ -38,7 +38,6 @@ const CustomTooltip = ({
         disableFocusListener
         disableTouchListener
       >
-        {/* Set Typography to render as div to avoid <div> within <p> issue */}
         <Typography component="div" style={{ color: "inherit" }}>
           {content.map((line, index) => (
             <div key={index}>{line}</div>
