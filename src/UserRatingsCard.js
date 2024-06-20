@@ -1,45 +1,45 @@
 import React from "react";
-import movieIcon from "./images/movie-icon.png";
-import "./App.css";
-import 'bootstrap-icons/font/bootstrap-icons.css';
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import Typography from "@mui/material/Typography";
+import Rating from "@mui/material/Rating";
+import StarIcon from "@mui/icons-material/Star";
+import { Chip, Stack, Box } from "@mui/material";
 
-const RatingStars = ({ rating }) => {
-  const totalStars = 5;
-  const fullStars = Math.floor(rating);
-  const hasHalfStar = rating % 1 >= 0.5 ? 1 : 0;
-  const emptyStars = totalStars - fullStars - hasHalfStar;
+const UserRatingsCard = ({ detail }) => {
+  const { movieDetails, rating } = detail;
+  const ratingValue = parseFloat(rating);
 
   return (
-    <div className="rating-stars">
-      {Array(fullStars).fill().map((_, i) => (
-        <i key={`full-${i}`} className="bi bi-star-fill"></i>  // Full star icon
-      ))}
-      {hasHalfStar > 0 && (
-        <i key="half-1" className="bi bi-star-half"></i>  // Half star icon
-      )}
-      {Array(emptyStars).fill().map((_, i) => (
-        <i key={`empty-${i}`} className="bi bi-star"></i>  // Empty star icon
-      ))}
-    </div>
-  );
-};
-
-const UserRatingsCard = ({ rating }) => {
-  return (
-    <div className="user-card" style={{ maxWidth: '400px' }}>
-      <div className="user-info">
-        <img src={movieIcon} alt="Movie Icon" className="movie-icon" />
-        <div className="rating-details">
-          <p><strong>User ID:</strong> {rating.userId}</p>
-          <p><strong>Movie ID:</strong> {rating.movieId}</p>
-          <p>
-            <strong>Rating:</strong> 
-            <RatingStars rating={parseFloat(rating.rating)} />
-          </p>
-          <p><strong>Date:</strong> {new Date(parseInt(rating.timestamp) * 1000).toLocaleString()}</p>
-        </div>
-      </div>
-    </div>
+    <Card sx={{ display: "flex", maxWidth: 400, mb: 2 }}>
+      <Box sx={{ minWidth: 100 }}>
+        <img
+          src={movieDetails[2]}
+          alt={movieDetails[0]}
+          style={{ width: "100%", height: "auto" }}
+        />
+      </Box>
+      <CardContent sx={{ flex: 1 }}>
+        <Typography gutterBottom variant="h6" component="div">
+          {movieDetails[0]}
+        </Typography>
+        <Rating
+          value={ratingValue}
+          precision={0.5}
+          readOnly
+          icon={<StarIcon fontSize="inherit" />}
+          emptyIcon={<StarIcon style={{ opacity: 0.55 }} fontSize="inherit" />}
+        />
+        <Typography variant="body2" color="text.secondary">
+          Rating: {rating} / 5
+        </Typography>
+        <Stack direction="row" spacing={1} flexWrap="wrap" mt={1}>
+          {movieDetails[1].map((genre, index) => (
+            <Chip key={index} label={genre} size="small" />
+          ))}
+        </Stack>
+      </CardContent>
+    </Card>
   );
 };
 

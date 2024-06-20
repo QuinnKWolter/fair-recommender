@@ -47,7 +47,12 @@ function App() {
   }, []);
 
   const handleOpenModal = (modal) => {
-    setModalState((prev) => ({ ...prev, [modal]: true }));
+    const selectedUser = users.find((user) => user.userID === selectedUserId);
+    setModalState((prev) => ({
+      ...prev,
+      [modal]: true,
+      userDetails: selectedUser || null,
+    }));
   };
 
   const handleCloseModal = (modal) => {
@@ -61,7 +66,13 @@ function App() {
         open={modalState.userDetail}
         handleClose={() => handleCloseModal("userDetail")}
         title="User Detail"
-        content={<ModalUserDetails />}
+        content={
+          <ModalUserDetails
+            userId={selectedUserId}
+            isOpen={modalState.userDetail}
+            users={users}
+          />
+        }
       />
       <CustomModal
         open={modalState.compareUsers}

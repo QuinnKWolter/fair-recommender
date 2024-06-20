@@ -60,14 +60,6 @@ const SVGIcon = styled.svg`
 export default function LegendWidget() {
   return (
     <WidgetContainer>
-      <Title>Project Contributors</Title>
-      <List>
-        <ListItem>Dr. Yu-Ru Lin</ListItem>
-        <ListItem>Yongsu Ahn</ListItem>
-        <ListItem>Quinn K Wolter</ListItem>
-        <ListItem>Jonilyn Dick</ListItem>
-        <ListItem>Janet Dick</ListItem>
-      </List>
       <Legend>
         <Title>Legend</Title>
         <LegendItem>
