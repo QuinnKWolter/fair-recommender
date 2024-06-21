@@ -6,13 +6,12 @@ import CustomTooltip from "./CustomTooltip";
 const ExplorerWrapper = styled.div.attrs({
   className: "explorer_wrapper",
 })`
-  width: 100vw;
+  width: 30vw;
   height: 100vh;
   overflow: hidden;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  //grid-area: e; // This is the grid area for the explorer component? Necessary still, or nah?
+  justify-content: right;
+  align-items: right;
+  position: relative;
 `;
 
 const Explorer = ({ users, selectedUserId, setSelectedUserId, algoEff }) => {
@@ -353,7 +352,7 @@ const Explorer = ({ users, selectedUserId, setSelectedUserId, algoEff }) => {
 
   return (
     <ExplorerWrapper>
-      <svg width={layout.w} height={layout.h} ref={svgRef}></svg>
+      <svg width="100%" height="100%" ref={svgRef}></svg>
       {isTooltipVisible && (
         <CustomTooltip
           open={isTooltipVisible}

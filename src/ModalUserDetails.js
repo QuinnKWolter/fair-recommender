@@ -3,46 +3,28 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import CircularProgress from "@mui/material/CircularProgress";
 import UserRatingsCard from "./UserRatingsCard";
+import UserCard from "./UserCard"; // Import the UserCard component
 
-const ModalUserDetails = ({ userId, isOpen }) => {
-  const [details, setDetails] = useState([]);
+const ModalUserDetails = ({ userId, users }) => {
+  const [details, setDetails] = useState(null);
   const [displayedDetails, setDisplayedDetails] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [itemCount, setItemCount] = useState(10); // Initial number of items to display
 
   useEffect(() => {
-    if (isOpen && userId) {
+    if (userId) {
       setLoading(true);
-      fetch("/data/movies.json")
-        .then((res) => res.json())
-        .then((movies) => {
-          fetch("/data/ratings.json")
-            .then((res) => res.json())
-            .then((ratings) => {
-              const userRatings = ratings[userId] || [];
-              const sortedRatings = userRatings.sort((a, b) => b[2] - a[2]);
-              const combinedDetails = sortedRatings.map((rating) => ({
-                ...rating,
-                movieDetails: movies[rating[0]],
-              }));
-              setDetails(combinedDetails);
-              setDisplayedDetails(combinedDetails.slice(0, itemCount));
-              setLoading(false);
-            })
-            .catch((error) => {
-              console.error("Error fetching ratings:", error);
-              setError("Failed to load data!");
-              setLoading(false);
-            });
-        })
-        .catch((error) => {
-          console.error("Error fetching movies:", error);
-          setError("Failed to load data!");
-          setLoading(false);
-        });
+      const user = users.find((user) => user.userID === userId);
+      if (user) {
+        setDetails(user);
+        setLoading(false);
+      } else {
+        setError("User not found");
+        setLoading(false);
+      }
     }
-  }, [userId, isOpen, itemCount]);
+  }, [userId, users]);
 
   const handleScroll = (event) => {
     const bottom =
@@ -53,29 +35,48 @@ const ModalUserDetails = ({ userId, isOpen }) => {
     }
   };
 
+  if (loading) return <CircularProgress />;
+  if (error) return <Typography color="error">{error}</Typography>;
+
   return (
     <Box
+      className="user-details-box"
       sx={{
         display: "flex",
         flexDirection: "column",
-        alignItems: "center",
+        alignItems: "flex-start", // Change from "center" to "flex-start"
         gap: 2,
         overflowY: "auto",
-        height: "70vh",
-        onScroll: handleScroll,
+        width: "100%", // Ensure it takes the full width of the parent
+        height: "100%", // Ensure height to fill the parent container
       }}
+      onScroll={handleScroll}
     >
-      <Typography variant="h6">User Ratings</Typography>
-      {loading ? (
-        <CircularProgress />
-      ) : error ? (
-        <Typography color="error">{error}</Typography>
-      ) : displayedDetails.length > 0 ? (
-        displayedDetails.map((detail, index) => (
-          <UserRatingsCard key={index} detail={detail} />
-        ))
-      ) : (
-        <Typography>No ratings available.</Typography>
+      {details && (
+        <>
+          <UserCard user={details} /> {/* Display the UserCard at the top */}
+
+          <Typography variant="h6">Recent Interactions</Typography>
+          {displayedDetails.length > 0 ? (
+            displayedDetails.map((detail, index) => (
+              <UserRatingsCard key={index} detail={detail} />
+            ))
+          ) : (
+            <Typography>No ratings available.</Typography>
+          )}
+
+          <Typography variant="h6">My Recommendations</Typography>
+          {/* Render recommendations here */}
+          {/* Example recommendations rendering */}
+          {details.recommendations && details.recommendations.map((rec, index) => (
+            <Box key={index} sx={{ display: 'flex', alignItems: 'center', marginBottom: 1 }}>
+              <Typography sx={{ minWidth: 100 }}>{rec.genre}</Typography>
+              <Box sx={{ width: '100%', height: 10, bgcolor: 'gray', marginLeft: 1, borderRadius: 1, overflow: 'hidden' }}>
+                <Box sx={{ width: `${rec.percentage}%`, height: '100%', bgcolor: rec.color }}></Box>
+              </Box>
+            </Box>
+          ))}
+        </>
       )}
     </Box>
   );

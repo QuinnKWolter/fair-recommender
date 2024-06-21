@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
+import './App.css'; // Import the CSS file
+
+// Import your components
 import Explorer from "./Explorer";
 import LegendWidget from "./LegendWidget";
 import Form from "./Form";
-import Header from "./Header";
-import CustomModal from "./CustomModal";
 import ModalUserDetails from "./ModalUserDetails";
-import ModalCompareUsers from "./ModalCompareUsers";
-import ModalInformation from "./ModalInformation";
 
 const theme = createTheme({
   palette: {
@@ -23,11 +22,6 @@ const theme = createTheme({
 function App() {
   const [users, setUsers] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState(null);
-  const [modalState, setModalState] = useState({
-    userDetail: false,
-    compareUsers: false,
-    information: false,
-  });
 
   useEffect(() => {
     console.log("Selected User ID changed to:", selectedUserId);
@@ -46,59 +40,30 @@ function App() {
     fetchUserData();
   }, []);
 
-  const handleOpenModal = (modal) => {
-    const selectedUser = users.find((user) => user.userID === selectedUserId);
-    setModalState((prev) => ({
-      ...prev,
-      [modal]: true,
-      userDetails: selectedUser || null,
-    }));
-  };
-
-  const handleCloseModal = (modal) => {
-    setModalState((prev) => ({ ...prev, [modal]: false }));
-  };
-
   return (
     <ThemeProvider theme={theme}>
-      <Header onOpenModal={handleOpenModal} />
-      <CustomModal
-        open={modalState.userDetail}
-        handleClose={() => handleCloseModal("userDetail")}
-        title="User Detail"
-        content={
-          <ModalUserDetails
-            userId={selectedUserId}
-            isOpen={modalState.userDetail}
+      <div className="app-container">
+        <div className="left-panel">
+          <Form
             users={users}
+            selectedUserId={selectedUserId}
+            setSelectedUserId={setSelectedUserId}
           />
-        }
-      />
-      <CustomModal
-        open={modalState.compareUsers}
-        handleClose={() => handleCloseModal("compareUsers")}
-        title="Compare Users"
-        content={<ModalCompareUsers />}
-      />
-      <CustomModal
-        open={modalState.information}
-        handleClose={() => handleCloseModal("information")}
-        title="Information"
-        content={<ModalInformation />}
-      />
-      <div className="App">
-        {/*users.length > 0 ? <Explorer users={users} /> : <div>Loading...</div>*/}
-        <Explorer
-          users={users}
-          selectedUserId={selectedUserId}
-          setSelectedUserId={setSelectedUserId}
-        />
-        <LegendWidget />
-        <Form
-          users={users}
-          selectedUserId={selectedUserId}
-          setSelectedUserId={setSelectedUserId}
-        />
+          <div className="user-details-container">
+            <ModalUserDetails userId={selectedUserId} users={users} />
+          </div>
+        </div>
+        <div className="center-panel">
+          Center Panel
+        </div>
+        <div className="right-panel">
+          <Explorer
+            users={users}
+            selectedUserId={selectedUserId}
+            setSelectedUserId={setSelectedUserId}
+          />
+          <LegendWidget />
+        </div>
       </div>
     </ThemeProvider>
   );

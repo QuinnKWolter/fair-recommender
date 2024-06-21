@@ -1,5 +1,5 @@
 import React from "react";
-import personIcon from "./images/person-icon.png"; // Import the person image icon
+import personIcon from "./images/person-icon.png";
 import "./App.css";
 
 const UserCard = ({ user }) => {

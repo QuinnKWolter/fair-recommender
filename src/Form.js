@@ -53,29 +53,6 @@ const occupationOptions = [
   { value: "20", label: "Writer" },
 ];
 
-const genreOptions = [
-  { value: "", label: "None" },
-  { value: "action", label: "Action" },
-  { value: "adventure", label: "Adventure" },
-  { value: "animation", label: "Animation" },
-  { value: "children", label: "Children's" },
-  { value: "comedy", label: "Comedy" },
-  { value: "crime", label: "Crime" },
-  { value: "documentary", label: "Documentary" },
-  { value: "drama", label: "Drama" },
-  { value: "fantasy", label: "Fantasy" },
-  { value: "film-noir", label: "Film-Noir" },
-  { value: "horror", label: "Horror" },
-  { value: "imax", label: "IMAX" },
-  { value: "musical", label: "Musical" },
-  { value: "mystery", label: "Mystery" },
-  { value: "romance", label: "Romance" },
-  { value: "sci-fi", label: "Sci-Fi" },
-  { value: "thriller", label: "Thriller" },
-  { value: "war", label: "War" },
-  { value: "western", label: "Western" },
-];
-
 const Form = ({ users, selectedUserId, setSelectedUserId }) => {
   // States for filters
   const [genderFilter, setGenderFilter] = useState("");
@@ -114,10 +91,7 @@ const Form = ({ users, selectedUserId, setSelectedUserId }) => {
   return (
     <Paper
       sx={{
-        position: "fixed",
-        right: 20,
-        bottom: 20,
-        width: 300,
+        width: '100%', // Ensure full width
         bgcolor: "rgba(255, 255, 255, 0.7)",
         boxShadow: 6,
         borderRadius: 2,
@@ -135,54 +109,32 @@ const Form = ({ users, selectedUserId, setSelectedUserId }) => {
             null
           }
         />
-        <Dropdown
+        {/* <Dropdown
           label="Gender"
-          options={[
-            { value: "M", label: "Male" },
-            { value: "F", label: "Female" },
-          ]}
+          options={genderOptions}
           onChange={(newValue) =>
             setGenderFilter(newValue ? newValue.value : "")
           }
         />
         <Dropdown
           label="Age"
-          options={[
-            { value: "1", label: "Under 18" },
-            { value: "18", label: "18-24" },
-            { value: "25", label: "25-34" },
-            { value: "35", label: "35-44" },
-            { value: "45", label: "45-54" },
-            { value: "55", label: "55-64" },
-            { value: "65", label: "65+" },
-          ]}
+          options={ageOptions}
           onChange={(newValue) => setAgeFilter(newValue ? newValue.value : "")}
         />
         <Dropdown
           label="Occupation"
-          options={[
-            { value: "10", label: "K-12 Student" },
-            { value: "16", label: "Self-Employed" },
-            // Add other occupations as necessary
-          ]}
+          options={occupationOptions}
           onChange={(newValue) =>
             setOccupationFilter(newValue ? newValue.value : "")
           }
         />
         <Dropdown
           label="Location"
-          options={[
-            { value: "48067", label: "48067" },
-            { value: "70072", label: "70072" },
-            // Add other ZIP codes as necessary
-          ]}
+          options={locationOptions}
           onChange={(newValue) =>
             setLocationFilter(newValue ? newValue.value : "")
           }
-        />
-        <Button variant="contained" color="success" sx={{ mt: 2 }}>
-          Search
-        </Button>
+        /> */}
       </Box>
     </Paper>
   );
