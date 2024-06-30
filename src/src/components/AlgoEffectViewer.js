@@ -105,7 +105,7 @@ const AlgoEffectViewer = ({
 
   return (
     <AlgoEffectViewerWrapper>
-      <h2>Algorithmic effects</h2>
+      <h2>Algorithmic effects </h2>
       <ScaleBarWrapper>
         <div style={{ width: '90px' }}>{'Miscalibration'}</div>&emsp;
         <svg 
