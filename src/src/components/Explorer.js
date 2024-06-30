@@ -90,7 +90,8 @@ const Explorer = ({
     // svg.select('.g_selected_user_pred').remove();
 
     const gLayout = svg.append('g').attr('class', 'g_layout'),
-      gUsers = svg.selectAll('.g_users').data(users);
+      gUsers = svg.selectAll('.g_users').data(users),
+      gProtoUsers = svg.selectAll('.g_protos').data(protos);
     let gSelectedUsersActual = svg.selectAll('.g_selected_user_actual'),
       gSelectedUsersPred = svg.selectAll('.g_selected_user_pred');
 
@@ -207,10 +208,6 @@ const Explorer = ({
       });
     
     //***** Prototypes
-    const gProtoUsers = svg
-      .selectAll('.g_protos')
-      .data(protos);
-
     gProtoUsers
       .enter()
       .append('g')

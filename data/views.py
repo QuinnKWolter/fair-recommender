@@ -20,7 +20,6 @@ from sklearn.manifold import TSNE
 
 class LoadData(APIView):
     def get(self, request, format=None):
-        r = ro.r
         target_id = 5
         model_name = 'bpr'
         mode = 'if_i_were' # if_i_were or if_i_preferred
@@ -75,6 +74,7 @@ class LoadData(APIView):
             mode,
             target_pred_uv,
             target_actual_uv,
+            actual_uvs,
             df_users_actual,
             df_users_pred,
             df_users,
@@ -105,12 +105,14 @@ def find_counterfactual_users(
     mode,
     target_pred_uv,
     target_actual_uv,
+    actual_uvs,
     df_users_actual,
     df_users_pred,
     df_users,
     categories,
     simulated_cats,
 ):
+    r = ro.r
     user_demographic = ['gender', 'age']
     all_vars = user_demographic + categories
 
@@ -148,7 +150,7 @@ def find_counterfactual_users(
         globalenv['match_summary'] = ''
 
 
-        ddd = r('''
+        run_matching = r('''
             genetic_match <- matchit(
                 as.formula(paste('cf_binary ~ ', 
                                 paste(control_vars, collapse='+'), 
@@ -159,7 +161,7 @@ def find_counterfactual_users(
 
         match_summary = globalenv['match_summary']
         print('match_summary: ', match_summary)
-        print('data_treated: ', globalenv['data_treated'].shape)
+        print('data_treated: ', globalenv['data_treated'])
         df_cf = globalenv['data_treated'].loc[globalenv['data_treated']['cf_binary'] == 0]
         cf_indices = list(df_cf.index.astype('int'))
         print('cf_indices: ', cf_indices)
