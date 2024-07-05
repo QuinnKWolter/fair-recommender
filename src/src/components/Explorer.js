@@ -13,11 +13,13 @@ const ExplorerWrapper = styled.div.attrs({
 
 const Explorer = ({
   selectedUserId,
+  cfUserId,
   users,
   group,
   protos,
   selectedAlgoEff,
-  meanPref
+  meanPref,
+  setAlgoEff
 }) => {
   const ref = useRef(null);
   const layout = {
@@ -32,6 +34,11 @@ const Explorer = ({
     }
   };
 
+  const algoEffs = [
+    { 'name': 'miscalibration', 'label': 'Miscalibration', 'data': users.map(d => d.miscalibration) },
+    { 'name': 'stereotype', 'label': 'Stereotype', 'data': users.map(d => d.stereotype) },
+    { 'name': 'filterBubble', 'label': 'Filter Bubble', 'data': users.map(d => d.filterBubble) },
+  ];
   const xScale = d3
     .scaleLinear()
     .domain(d3.extent(users.map(d => d.x0_pred)))
@@ -46,24 +53,24 @@ const Explorer = ({
     .domain(['M', 'F'])
     .range(['blue', 'red']);
 
-  const stereotypingColorScale = d3
+  const stereotypeColorScale = d3
     .scaleLinear()
-    .domain([d3.min(users.map(d => d.stereotyping)), 0, d3.max(users.map(d => d.stereotyping))])
+    .domain([d3.min(users.map(d => d.stereotype)), 0, d3.max(users.map(d => d.stereotype))])
     .range(['blue', 'whitesmoke', 'red']);
 
   const miscalibrationColorScale = d3
     .scaleLinear()
-    .domain([0, d3.max(users.map(d => d.error))])
+    .domain([0, d3.max(users.map(d => d.miscalibration))])
     .range(['white', 'red']);
 
   const filterBubbleRadiusScale = d3
     .scaleLinear()
-    .domain([0, d3.max(users.map(d => d.filter_bubble))])
+    .domain([0, d3.max(users.map(d => d.filterBubble))])
     .range([layout.circle.r-1, layout.circle.r+1]);
 
   const filterBubbleColorScale = d3
     .scaleLinear()
-    .domain([d3.min(users.map(d => d.filter_bubble)), 0, d3.max(users.map(d => d.filter_bubble))])
+    .domain([d3.min(users.map(d => d.filterBubble)), 0, d3.max(users.map(d => d.filterBubble))])
     .range(['blue', 'lightgray', 'red']);
 
   const typicalityColorScale = d3
@@ -73,7 +80,7 @@ const Explorer = ({
 
   const filterBubbleBorderScale = d3
     .scaleLinear()
-    .domain([0, d3.max(users.map(d => Math.abs(d.filter_bubble)))])
+    .domain([0, d3.max(users.map(d => Math.abs(d.filterBubble)))])
     .range([0.5, 1]);
 
   useEffect(() => {
@@ -92,13 +99,19 @@ const Explorer = ({
     const gLayout = svg.append('g').attr('class', 'g_layout'),
       gUsers = svg.selectAll('.g_users').data(users),
       gProtoUsers = svg.selectAll('.g_protos').data(protos);
-    let gSelectedUsersActual = svg.selectAll('.g_selected_user_actual'),
-      gSelectedUsersPred = svg.selectAll('.g_selected_user_pred');
+    let gSelectedUsersActualSelected = svg.selectAll('.g_actual_selected'),
+      gSelectedUsersPredSelected = svg.selectAll('.g_pred_selected'),
+      gSelectedUsersActualCF = svg.selectAll('.g_actual_counterfactual'),
+      gSelectedUsersPredCF = svg.selectAll('.g_pred_counterfactual');
 
     // gUsers.selectAll('circle').remove();
     // gUsers.selectAll('path').remove();
-    gSelectedUsersActual.selectAll('circle').remove();
-    gSelectedUsersActual.selectAll('path').remove();
+    gSelectedUsersActualSelected.exit().remove();
+    gSelectedUsersPredSelected.exit().remove();
+    gSelectedUsersActualCF.exit().remove();
+    gSelectedUsersPredCF.exit().remove();
+    // gSelectedUsersActual.selectAll('circle').remove();
+    // gSelectedUsersActual.selectAll('path').remove();
     gUsers.exit().remove();
     gProtoUsers.exit().remove();
     // gProtoUsers.selectAll('circle').remove();
@@ -146,52 +159,8 @@ const Explorer = ({
       })
       .on('mouseover', function(d) {
         const data = d3.select(this).data()[0];
-        console.log('stereotype/pred_dev: ', data.stereotyping, data.pred_dev)
+        console.log('stereotype/pred_dev: ', data.stereotype, data.pred_dev)
       });
-
-    // gUsers
-    //   .append('circle')
-    //   .attr('class', 'user_circle_bubble')
-    //   .attr('cx', 0)
-    //   .attr('cy', 0)
-    //   .attr('opacity', 0)
-    //   .attr('r', d => filterBubbleRadiusScale(d.filter_bubble))
-    //   .style('fill', 'none')
-    //   .style('stroke', d => {
-    //     let circleStroke = '';
-        
-    //     circleStroke = filterBubbleColorScale(d.filter_bubble)
-    //     if (d.is_cf === 1) circleStroke = 'green';
-    //     if (d.is_focal === 1) circleStroke = 'blue';
-    //     return circleStroke
-    //   })
-    //   // .style('stroke-dasharray', '2,1')
-    //   .style('stroke-width', d => {
-    //     let strokeWidth = 1;
-        
-    //     strokeWidth = filterBubbleBorderScale(d.filter_bubble)
-    //     if (d.is_cf === 1) strokeWidth = 4
-    //     if (d.is_focal === 1) strokeWidth = 4
-    //     return strokeWidth
-    //   })
-    //   // .style('fill-opacity', 0.4)
-    //   .on('mouseover', function(d) {
-    //     const data = d3.select(this).data()[0];
-    //     console.log('stereotype/pred_dev: ', data.stereotyping, data.actual_dev, data.is_cf, data.is_focal)
-    //   })
-
-    // gUsers
-    //   .append("path")
-    //   .attr( "class", "link")
-    //   .style( "stroke", "#000")
-    //   .style('opacity', 1)
-    //   // .attr('marker-start', (d) => "url(#arrow)")//attach the arrow from defs
-    //   .style( "stroke-width", 0.5)
-    //   .attr("d", (d) => {
-    //     const theta = Math.atan2((d.x0_actual-d.x0_pred), (d.x1_actual-d.x1_pred));
-    //     const length = 5
-    //     return "M" + 0 + "," + 0 + "," + (length*Math.cos(theta)) + "," + (length*Math.sin(theta))
-    //   });
 
     gUserCircles
       .style('fill', d => {
@@ -199,9 +168,9 @@ const Explorer = ({
         
         if (group === '') circleColor ='gray';
         else if (group === 'gender') circleColor = genderColorScale(d.gender);
-        else if (group === 'stereotyping') circleColor = stereotypingColorScale(d.stereotyping);
-        else if (group === 'error') circleColor = miscalibrationColorScale(d.error)
-        else if (group === 'filter_bubble') circleColor = filterBubbleColorScale(d.filter_bubble);
+        else if (group === 'stereotype') circleColor = stereotypeColorScale(d.stereotype);
+        else if (group === 'miscalibration') circleColor = miscalibrationColorScale(d.miscalibration)
+        else if (group === 'filterBubble') circleColor = filterBubbleColorScale(d.filterBubble);
         else if (group === 'atypicality') circleColor = typicalityColorScale(d.pred_dev);
 
         return circleColor;
@@ -253,7 +222,7 @@ const Explorer = ({
       })
       .on('mouseover', function(d) {
         const data = d3.select(this).data()[0];
-        console.log('stereotype/pred_dev: ', data.stereotyping, data.pred_dev)
+        console.log('stereotype/pred_dev: ', data.stereotype, data.pred_dev)
       });
 
     gProtoUserCircles
@@ -262,13 +231,101 @@ const Explorer = ({
         
         if (group === '') circleColor ='gray';
         else if (group === 'gender') circleColor = genderColorScale(d.gender);
-        else if (group === 'stereotyping') circleColor = stereotypingColorScale(d.stereotyping);
-        else if (group === 'error') circleColor = miscalibrationColorScale(d.error)
-        else if (group === 'filter_bubble') circleColor = filterBubbleColorScale(d.filter_bubble);
+        else if (group === 'stereotype') circleColor = stereotypeColorScale(d.stereotype);
+        else if (group === 'miscalibration') circleColor = miscalibrationColorScale(d.miscalibration)
+        else if (group === 'filterBubble') circleColor = filterBubbleColorScale(d.filterBubble);
         else if (group === 'atypicality') circleColor = typicalityColorScale(d.pred_dev);
 
         return circleColor;
       });
+
+    // // const gProtoUserCirclesActual = gProtoUsers
+    // //   .append('circle')
+    // //   .attr('class', 'proto_circle')
+    // //   // .attr('d', d3.symbol().type(d3.symbolSquare))
+    // //   .attr('cx', 0)
+    // //   .attr('cy', 0)
+    // //   // .attr('transform', 'rotate(45)')
+    // //   .attr('r', layout.circle.r+3)
+    // //   .style('fill-opacity', d => {
+    // //     let circleOpacity = '';
+        
+    // //     circleOpacity = 0.2
+    // //     if (d.is_cf === 1) circleOpacity = 1
+    // //     if (d.is_focal === 1) circleOpacity = 1
+    // //     // return circleOpacity
+    // //     return 0.7
+    // //   })
+    // //   .style('stroke', d => {
+    // //     let circleStroke = '';
+        
+    // //     circleStroke = 'none';
+    // //     if (d.is_cf === 1) circleStroke = 'red';
+    // //     if (d.is_focal === 1) circleStroke = 'blue';
+    // //     return 'black'
+    // //   })
+    // //   .on('mouseover', function(d) {
+    // //     const data = d3.select(this).data()[0];
+    // //     console.log('stereotype/pred_dev: ', data.stereotype, data.pred_dev)
+    // //   });
+
+    // // gProtoUserCirclesActual
+    // //   .style('fill', d => {
+    // //     let circleColor = '';
+        
+    // //     if (group === '') circleColor ='gray';
+    // //     else if (group === 'gender') circleColor = genderColorScale(d.gender);
+    // //     else if (group === 'stereotype') circleColor = stereotypeColorScale(d.stereotype);
+    // //     else if (group === 'miscalibration') circleColor = miscalibrationColorScale(d.miscalibration)
+    // //     else if (group === 'filterBubble') circleColor = filterBubbleColorScale(d.filterBubble);
+    // //     else if (group === 'atypicality') circleColor = typicalityColorScale(d.pred_dev);
+
+    // //     return circleColor;
+    // //   });
+
+    // gProtoUsers
+    //   .append('circle')
+    //   .attr('class', 'user_circle_bubble')
+    //   .attr('cx', 0)
+    //   .attr('cy', 0)
+    //   .attr('opacity', 0)
+    //   .attr('r', d => filterBubbleRadiusScale(d.filterBubble))
+    //   .style('fill', 'none')
+    //   .style('stroke', d => {
+    //     let circleStroke = '';
+        
+    //     circleStroke = filterBubbleColorScale(d.filterBubble)
+    //     if (d.is_cf === 1) circleStroke = 'green';
+    //     if (d.is_focal === 1) circleStroke = 'blue';
+    //     return circleStroke
+    //   })
+    //   // .style('stroke-dasharray', '2,1')
+    //   .style('stroke-width', d => {
+    //     let strokeWidth = 1;
+        
+    //     strokeWidth = filterBubbleBorderScale(d.filterBubble)
+    //     if (d.is_cf === 1) strokeWidth = 4
+    //     if (d.is_focal === 1) strokeWidth = 4
+    //     return strokeWidth
+    //   })
+    //   // .style('fill-opacity', 0.4)
+    //   .on('mouseover', function(d) {
+    //     const data = d3.select(this).data()[0];
+    //     console.log('stereotype/pred_dev: ', data.stereotype, data.actual_dev, data.is_cf, data.is_focal)
+    //   })
+
+    // gProtoUsers
+    //   .append("path")
+    //   .attr( "class", "link")
+    //   .style( "stroke", "#000")
+    //   .style('opacity', 1)
+    //   // .attr('marker-start', (d) => "url(#arrow)")//attach the arrow from defs
+    //   .style( "stroke-width", 0.5)
+    //   .attr("d", (d) => {
+    //     const theta = Math.atan2((d.x0_actual-d.x0_pred), (d.x1_actual-d.x1_pred));
+    //     const length = 5
+    //     return "M" + 0 + "," + 0 + "," + (length*Math.cos(theta)) + "," + (length*Math.sin(theta))
+    //   });
 
     //***** Mean preference
     gLayout
@@ -327,26 +384,38 @@ const Explorer = ({
     });
 
     //***** Render selected and counterfactual users
+    console.log('is_cf? ', users.filter(d => d.is_cf));
     const dataSelectedUser = users.filter(d => d.userID === selectedUserId);
-    const dataCounterfactualUsers = [ users.filter(d => d.is_cf)[0] ];
+    const dataCounterfactualUsers = users.filter(d => d.userId === cfUserId);
+    // console.log('dataCounterfactualUsers: ', [ users.filter(d => d.is_cf)[0] ])
+
+    console.log('dataSelectedUser: ', dataSelectedUser);
+    console.log('dataCounterfactualUsers: ', dataCounterfactualUsers);
 
     ['selected', 'counterfactual'].forEach(userType => {
       const dataUsers = (userType == 'selected') ? dataSelectedUser : dataCounterfactualUsers;
+      const gSelectedUsersPred = (userType == 'selected') ? gSelectedUsersPredSelected : gSelectedUsersPredCF;
+      const gSelectedUsersActual = (userType == 'selected') ? gSelectedUsersActualSelected : gSelectedUsersActualCF;
 
       gSelectedUsersPred.selectAll('circle').remove();
+      gSelectedUsersPred.selectAll('path').remove();
+      gSelectedUsersPred.selectAll('line').remove();
+      gSelectedUsersActual.selectAll('circle').remove();
+      gSelectedUsersActual.selectAll('path').remove();
+      gSelectedUsersActual.selectAll('line').remove();
 
       gSelectedUsersPred
         .data(dataUsers)
         .enter()
         .append('g')
-        .attr('class', 'g_selected_user_pred')
+        .attr('class', 'g_pred_' + userType)
         .attr('transform', function(d) {
           return 'translate(' + xScale(d.x0_pred) + ',' + yScale(d.x1_pred) + ')';
         });
 
       const selectedUserPredCircle = gSelectedUsersPred
         .append('circle')
-        .attr('class', 'selected_user_pred_circle' + userType)
+        .attr('class', 'pred_circle_' + userType)
         .attr('cx', 0)
         .attr('cy', 0)
         .attr('r', 8)
@@ -355,7 +424,7 @@ const Explorer = ({
         .style('fill-opacity', 0.5)
         .on('mouseover', function(d) {
           const data = d3.select(this).data()[0];
-          console.log('stereotype/pred_dev: ', data.stereotyping, data.actual_dev)
+          console.log('stereotype/pred_dev: ', data.stereotype, data.actual_dev)
         });
 
       selectedUserPredCircle
@@ -363,9 +432,9 @@ const Explorer = ({
           let circleColor = '';
           if (group === '') circleColor ='gray';
           else if (group === 'gender') circleColor = genderColorScale(d.gender);
-          else if (group === 'stereotyping') circleColor = stereotypingColorScale(d.stereotyping);
-          else if (group === 'error') circleColor = miscalibrationColorScale(d.error)
-          else if (group === 'filter_bubble') circleColor = filterBubbleColorScale(d.filter_bubble);
+          else if (group === 'stereotype') circleColor = stereotypeColorScale(d.stereotype);
+          else if (group === 'miscalibration') circleColor = miscalibrationColorScale(d.miscalibration)
+          else if (group === 'filterBubble') circleColor = filterBubbleColorScale(d.filterBubble);
           else if (group === 'atypicality') circleColor = typicalityColorScale(d.pred_dev);
 
           return circleColor;
@@ -375,14 +444,14 @@ const Explorer = ({
         .data(dataUsers)
         .enter()
         .append('g')
-        .attr('class', 'g_selected_user_actual')
+        .attr('class', 'g_actual_' + userType)
         .attr('transform', function(d) {
           return 'translate(' + xScale(d.x0_actual) + ',' + yScale(d.x1_actual) + ')';
         });
 
       gSelectedUsersActual
         .append('circle')
-        .attr('class', 'selected_user_actual_circle' + userType)
+        .attr('class', 'actual_circle_' + userType)
         .attr('cx', 0)
         .attr('cy', 0)
         .attr('r', 8)
@@ -401,22 +470,52 @@ const Explorer = ({
         .attr( "class", "link")
         .style( "stroke", "#000")
         .style('opacity', 1)
-        .attr('marker-start', (d) => "url(#arrow)")//attach the arrow from defs
+        .attr('marker-start', (d) => "url(#arrow)") //attach the arrow from defs
         .style( "stroke-width", 1.5)
         .attr("d", (d) => {
           const theta = Math.atan2((yScale(d.x1_pred)-yScale(d.x1_actual)), (xScale(d.x0_pred)-xScale(d.x0_actual)));
           const length = 15
           return "M" + 0 + "," + 0 + "," + (length*Math.cos(theta)) + "," + (length*Math.sin(theta))
         });
+
+      gSelectedUsersActual
+        .append("line")
+        .attr( "class", "from_actual_to_pred")
+        .attr('x1', d => 0)
+        .attr('y1', d => 0)
+        .attr('x2', d => xScale(d.x0_pred) - xScale(d.x0_actual))
+        .attr('y2', d => yScale(d.x1_pred) - yScale(d.x1_actual))
+        .style("stroke", "#000")
+        .style('opacity', 1)
+        .attr('marker-start', (d) => "url(#arrow)")//attach the arrow from defs
+        .style("stroke-width", 1)
+        .style('stroke-dasharray', '6,3')
+        // .attr("d", (d) => {
+        //   const theta = Math.atan2((yScale(d.x1_pred)-yScale(d.x1_actual)), (xScale(d.x0_pred)-xScale(d.x0_actual)));
+        //   const length = Math.sqrt(Math.pow(yScale(d.x1_pred)-yScale(d.x1_actual), 2)) + Math.pow((xScale(d.x0_pred)-xScale(d.x0_actual), 2))
+        //   return "M" + 0 + "," + 0 + "," + (length*Math.cos(theta)) + "," + (length*Math.sin(theta))
+        // });
+
+      gSelectedUsersActual
+        .append('text')
+        .attr('x', 0)
+        .attr('y', 0)
+        .style('stroke', 'white')
+        .style('stroke-width', 0.5)
+        .style('fill', 'black')
+        .style('font-weight', 'bold')
+        .text(userType)
     });
-  }, [ref.current, group])
+  }, [ref.current, users, group])
 
   return (
     <ExplorerWrapper>
       <AlgoEffectViewer 
+        algoEffs={algoEffs}
         selectedAlgoEff={selectedAlgoEff}
         users={users} 
-        selectedUser={users.filter(d => d.userID === selectedUserId)[0]} 
+        selectedUser={users.filter(d => d.userID === selectedUserId)[0]}
+        setAlgoEff={setAlgoEff}
       />
       <svg 
         width={layout.w} 

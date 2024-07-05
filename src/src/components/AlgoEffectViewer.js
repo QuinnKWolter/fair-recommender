@@ -17,13 +17,18 @@ const ScaleBarWrapper = styled.div.attrs({
   `;
 
 const AlgoEffectViewer = ({
+  algoEffs,
   selectedAlgoEff,
   selectedUser,
   users,
+  setAlgoEff
 }) => {
-  const ref0 = useRef(null),
-    ref1 = useRef(null),
-    ref2 = useRef(null);
+  let refs = Array(3).fill(0);
+  
+  refs[0] = useRef(null);
+  refs[1] = useRef(null);
+  refs[2] = useRef(null);
+
   const layout = {
     w: 500,
     h: 35,
@@ -33,9 +38,9 @@ const AlgoEffectViewer = ({
     }
   };
 
-  const stereotypes = users.map(d => d.stereotyping),
-      miscalibrations = users.map(d => d.error),
-      filterBubbles = users.map(d => d.filter_bubble);
+  const stereotypes = users.map(d => d.stereotype),
+      miscalibrations = users.map(d => d.miscalibration),
+      filterBubbles = users.map(d => d.filterBubble);
 
   useEffect(() => {
     // d3-legend module: https://d3-legend.susielu.com/
@@ -50,8 +55,14 @@ const AlgoEffectViewer = ({
 
     d3.selectAll('.g_scale_bar').remove();
 
-    const renderScaleBar = (dataAlgoEff, userAlgoEff, isSelected, ref, idx) => {
+    const renderScaleBar = (currentAlgoEff, selectedUser, selectedAlgoEff, ref, idx) => {
+      const dataAlgoEff = currentAlgoEff.data,
+        userAlgoEff = selectedUser[currentAlgoEff.name], 
+        isSelected = selectedAlgoEff==currentAlgoEff.name; 
+
       const svg = d3.select(ref.current);
+      svg.selectAll('defs').remove();
+
       const dataDomain = [d3.min(dataAlgoEff), 0, d3.max(dataAlgoEff)];
       const xAlgoEffScale = d3.scaleLinear()
         .domain(d3.extent(dataAlgoEff))
@@ -67,20 +78,20 @@ const AlgoEffectViewer = ({
 
       const g = svg.append("g")
           .attr('class', 'g_scale_bar')
-          .attr("transform", "translate(" + (padding) + ", 0)");
+          .attr("transform", "translate(" + (padding) + ", 0)")
+          .style('opacity', isSelected ? 1 : 0.2);
 
-      const defs = svg.append("defs");
-      const linearGradient = defs.append("linearGradient").attr("id", "scale_bar_gradient");
+      const linearGradient = svg.append("defs").append("linearGradient").attr("id", "scale_bar_gradient_" + currentAlgoEff.name);
       linearGradient.selectAll("stop")
           .data(dataDomain)
-        .enter().append("stop")
+          .enter().append("stop")
           .attr("offset", d => ((xAlgoEffScale(d)-xAlgoEffScale(dataDomain[0]))/(xAlgoEffScale(dataDomain[2])-xAlgoEffScale(dataDomain[0])) * 100) + '%')
           .attr("stop-color", d => colorScale(d));
 
       g.append("rect")
           .attr("width", innerWidth)
           .attr("height", barHeight)
-          .style("fill", "url(#scale_bar_gradient)")
+          .style("fill", "url(#scale_bar_gradient_" + currentAlgoEff.name + ")")
           .style('stroke', 'black')
           .style('stroke-width', 1);
 
@@ -98,43 +109,28 @@ const AlgoEffectViewer = ({
         // .attr('y', 0);
     }
     
-    renderScaleBar(stereotypes, selectedUser.stereotyping, selectedAlgoEff=='stereotyping', ref0, 1);
-    renderScaleBar(miscalibrations, selectedUser.error, selectedAlgoEff=='error', ref1, 2);
-    renderScaleBar(filterBubbles, selectedUser.filter_bubble, selectedAlgoEff=='filter_bubble', ref2, 3);
-  }, [ref0.current, ref1.current, ref2.current])
+    algoEffs.forEach((currentAlgoEff, i) => {
+      renderScaleBar(currentAlgoEff, selectedUser, selectedAlgoEff, refs[i], i);
+    });
+  }, [refs[0].current, refs[1].current, refs[2].current, selectedAlgoEff])
 
   return (
     <AlgoEffectViewerWrapper>
       <h2>Algorithmic effects </h2>
-      <ScaleBarWrapper>
-        <div style={{ width: '90px' }}>{'Miscalibration'}</div>&emsp;
-        <svg 
-          width={layout.w} 
-          height={layout.h} 
-          // preserveAspectRatio="xMinYMin"
-          ref={ref0} 
-        />
-      </ScaleBarWrapper>
-      <ScaleBarWrapper>
-        <div style={{ width: '90px' }}>{'Stereotype'}</div>&emsp;
-        <svg 
-          width={layout.w} 
-          height={layout.h} 
-          // preserveAspectRatio="xMinYMin"
-          ref={ref1} 
-        />
-      </ScaleBarWrapper>
-      <ScaleBarWrapper>
-        <div style={{ width: '90px' }}>{'Filter Bubble'}</div>&emsp;
-        <svg 
-          width={layout.w} 
-          height={layout.h} 
-          // preserveAspectRatio="xMinYMin"
-          ref={ref2} 
-        />
-      </ScaleBarWrapper>
-      
-      
+      {algoEffs.map((algoEff, i) => 
+        (<ScaleBarWrapper>
+          <div 
+            style={{ width: '90px', opacity: selectedAlgoEff==algoEff.name ? 1 : 0.2 }}
+            onClick={() => setAlgoEff(algoEff.name)}
+          >{algoEff.label}</div>&emsp;
+          <svg 
+            width={layout.w} 
+            height={layout.h} 
+            // preserveAspectRatio="xMinYMin"
+            ref={refs[i]} 
+          />
+        </ScaleBarWrapper>)
+      )}  
     </AlgoEffectViewerWrapper>
   );
 };

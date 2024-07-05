@@ -30,64 +30,65 @@ class LoadData(APIView):
             'Western'
             ]
         
-        actual_uvs = pickle.load(open('./static/data/actual_uvs_all.pkl', 'rb'))
-        pred_uvs = pickle.load(open('./static/data/pred_uvs_all.pkl', 'rb'))
-        mean_uvs = pickle.load(open('./static/data/mean_uvs_all.pkl', 'rb'))
+        # actual_uvs = pickle.load(open('./static/data/actual_uvs_all.pkl', 'rb'))
+        # pred_uvs = pickle.load(open('./static/data/pred_uvs_all.pkl', 'rb'))
+        # mean_uvs = pickle.load(open('./static/data/mean_uvs_all.pkl', 'rb'))
         mean_uvs_2d = pickle.load(open('./static/data/mean_uvs_2d_all.pkl', 'rb'))
         # categories = pickle.load(open('./static/data/categories.pkl', 'rb')).tolist()
 
-        df_users = pd.read_csv('./static/data/df_users_all_w_coords_bpr.csv')
+        df_users = pd.read_csv('./static/data/df_users.csv')
         # nan_df = np.where(np.asanyarray(np.isnan(df_users)))
-        row_idx_w_null = df_users.loc[pd.isna(df_users).any(axis=1), :].index.values
-        df_users = df_users.loc[~df_users.index.isin(row_idx_w_null)].reset_index(drop=True)
-        actual_uvs = np.delete(actual_uvs, row_idx_w_null, 0)
-        pred_uvs = np.delete(pred_uvs, row_idx_w_null, 0)
+        # row_idx_w_null = df_users.loc[pd.isna(df_users).any(axis=1), :].index.values
+        # df_users = df_users.loc[~df_users.index.isin(row_idx_w_null)].reset_index(drop=True)
+        # actual_uvs = np.delete(actual_uvs, row_idx_w_null, 0)
+        # pred_uvs = np.delete(pred_uvs, row_idx_w_null, 0)
 
-        pred_arith_mean_uv_2d = mean_uvs_2d[0]
-        pred_geo_mean_uv_2d = mean_uvs_2d[1]
-        actual_arith_mean_uv_2d = mean_uvs_2d[2]
-        actual_geo_mean_uv_2d = mean_uvs_2d[3]
+        # pred_arith_mean_uv_2d = mean_uvs_2d[0]
+        # print('pred_arith_mean_uv_2d: ', pred_arith_mean_uv_2d)
+        # pred_geo_mean_uv_2d = mean_uvs_2d[1]
+        # actual_arith_mean_uv_2d = mean_uvs_2d[2]
+        # actual_geo_mean_uv_2d = mean_uvs_2d[3]
 
-        protos = _find_prototypes(df_users)
+        # protos = _find_prototypes(df_users)
 
-        print('pred_geo_mean_uv_2d; ', pred_arith_mean_uv_2d, pred_geo_mean_uv_2d)
+        # print('pred_geo_mean_uv_2d; ', pred_arith_mean_uv_2d, pred_geo_mean_uv_2d)
 
-        df_actual_uvs = pd.DataFrame(actual_uvs, columns=categories)
-        df_pred_uvs = pd.DataFrame(pred_uvs, columns=categories)
+        # df_actual_uvs = pd.DataFrame(actual_uvs, columns=categories)
+        # df_pred_uvs = pd.DataFrame(pred_uvs, columns=categories)
 
-        df_actual_uvs.to_csv('./static/data/df_actual_uvs.csv')
-        df_users.to_csv('./static/data/df_users.csv')
-        df_users_actual = pd.concat([df_users[['userID', 'gender', 'age', 'occupation', 'zip_code']], df_actual_uvs], axis=1)
-        df_users_pred = pd.concat([df_users[['userID', 'gender', 'age', 'occupation', 'zip_code']], df_pred_uvs], axis=1)
+        # df_actual_uvs.to_csv('./static/data/df_actual_uvs.csv')
+        # df_users.to_csv('./static/data/df_users.csv')
+        # df_users_actual = pd.concat([df_users[['userID', 'gender', 'age', 'occupation', 'zip_code']], df_actual_uvs], axis=1)
+        # df_users_pred = pd.concat([df_users[['userID', 'gender', 'age', 'occupation', 'zip_code']], df_pred_uvs], axis=1)
 
-        target_user_info = df_users_actual.loc[df_users_actual['userID']==target_id]
-        target_idx = target_user_info.index
-        target_actual_uv = actual_uvs[target_idx].flatten()
-        target_pred_uv = pred_uvs[target_idx].flatten()
+        # target_user_info = df_users_actual.loc[df_users_actual['userID']==target_id]
+        # target_idx = target_user_info.index
+        # target_actual_uv = actual_uvs[target_idx].flatten()
+        # target_pred_uv = pred_uvs[target_idx].flatten()
 
         # for idx, (id, user) in enumerate(df_users.iterrows()):
         #     diversity_actual = 1 - entropy(actual_uvs_all[idx])
         #     diversity_pred = 1 - entropy(pred_uvs_all[idx])
         #     df_users.loc[id, 'filterBubble'] = diversity_actual - diversity_pred
 
-        df_users = find_counterfactual_users(
-            mode,
-            target_pred_uv,
-            target_actual_uv,
-            actual_uvs,
-            df_users_actual,
-            df_users_pred,
-            df_users,
-            categories,
-            simulated_cats,
-        )
+        # df_users = find_counterfactual_users(
+        #     mode,
+        #     target_pred_uv,
+        #     target_actual_uv,
+        #     actual_uvs,
+        #     df_users_actual,
+        #     df_users_pred,
+        #     df_users,
+        #     categories,
+        #     simulated_cats,
+        # )
 
         return Response({
             'users': df_users.to_dict(orient='records'),
-            'predUVs': pred_uvs,
-            'actualUVs': actual_uvs,
-            'meanUV': pred_arith_mean_uv_2d.flatten().tolist(),
-            'protos': protos.to_dict(orient='records')
+            # 'predUVs': pred_uvs,
+            # 'actualUVs': actual_uvs,
+            # 'meanUV': pred_arith_mean_uv_2d.flatten().tolist(),
+            # 'protos': df_users.to_dict(orient='records')
             # 'cfIdx': cf_indices
         })
     
