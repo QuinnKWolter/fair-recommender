@@ -33,15 +33,16 @@ function App() {
   const [ users, setUsers ] = useState();
   const [ meanPref, setMeanPref ] = useState([ 4.9327693, 6.887655 ]);
   const [ group, setGroup ] = useState('stereotype');
+  const [ selectedAlgoEff, setAlgoEff ] = useState('all');
   const [ protos, setProtos ] = useState([]);
-  const [ selectedAlgoEff, setAlgoEff ] = useState('stereotype');
+  const [ clusterMode, setClusterMode ] = useState('stereotype'); // 'all' or one of algorithmic effects
 
   const getData = () => {
     axios.get('http://localhost:8000/data/loadData/')
       .then((res) => {
-        const protos = res.data.users.filter(d => d.is_proto == true);
+        // Encode prototypes and cluster information based on 
         setUsers(res.data.users);
-        setProtos(protos);
+        setProtos(res.data.users.filter(d => d['is_proto_' + clusterMode] != 'False'));
       }).catch(err => console.error('Error'))
   }
   const initialized = useRef(false);
