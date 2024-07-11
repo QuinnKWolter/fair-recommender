@@ -8,12 +8,12 @@ from sklearn.neighbors import NearestNeighbors
 from scipy.stats import entropy
 import pickle, copy
 
-import rpy2.robjects as ro
-import rpy2.robjects.packages as rpackages
-from rpy2.robjects.packages import importr
-from rpy2.robjects import pandas2ri
-from rpy2.robjects.conversion import localconverter
-from rpy2.robjects import globalenv
+# import rpy2.robjects as ro
+# import rpy2.robjects.packages as rpackages
+# from rpy2.robjects.packages import importr
+# from rpy2.robjects import pandas2ri
+# from rpy2.robjects.conversion import localconverter
+# from rpy2.robjects import globalenv
 
 import umap.umap_ as umap
 from sklearn.manifold import TSNE
@@ -33,7 +33,7 @@ class LoadData(APIView):
         # actual_uvs = pickle.load(open('./static/data/actual_uvs_all.pkl', 'rb'))
         # pred_uvs = pickle.load(open('./static/data/pred_uvs_all.pkl', 'rb'))
         # mean_uvs = pickle.load(open('./static/data/mean_uvs_all.pkl', 'rb'))
-        mean_uvs_2d = pickle.load(open('./static/data/mean_uvs_2d_all.pkl', 'rb'))
+        # mean_uvs_2d = pickle.load(open('./static/data/mean_uvs_2d_all.pkl', 'rb'))
         # categories = pickle.load(open('./static/data/categories.pkl', 'rb')).tolist()
 
         df_users = pd.read_csv('./static/data/df_users.csv')
@@ -92,115 +92,115 @@ class LoadData(APIView):
             # 'cfIdx': cf_indices
         })
     
-def _simulate_prefs(uv, categories, simulated_cats):
-    uv_updated = copy.deepcopy(uv)
-    for cat, score in simulated_cats.items():
-        uv_updated[categories.index(cat)] = score
-    return uv_updated
+# def _simulate_prefs(uv, categories, simulated_cats):
+#     uv_updated = copy.deepcopy(uv)
+#     for cat, score in simulated_cats.items():
+#         uv_updated[categories.index(cat)] = score
+#     return uv_updated
 
-def _find_prototypes(df_users):
-    protos = df_users.loc[:10]
-    return protos
+# def _find_prototypes(df_users):
+#     protos = df_users.loc[:10]
+#     return protos
 
-def find_counterfactual_users(
-    mode,
-    target_pred_uv,
-    target_actual_uv,
-    actual_uvs,
-    df_users_actual,
-    df_users_pred,
-    df_users,
-    categories,
-    simulated_cats,
-):
-    r = ro.r
-    user_demographic = ['gender', 'age']
-    all_vars = user_demographic + categories
+# def find_counterfactual_users(
+#     mode,
+#     target_pred_uv,
+#     target_actual_uv,
+#     actual_uvs,
+#     df_users_actual,
+#     df_users_pred,
+#     df_users,
+#     categories,
+#     simulated_cats,
+# ):
+#     r = ro.r
+#     user_demographic = ['gender', 'age']
+#     all_vars = user_demographic + categories
 
-    # Set counterfactual simulations
-    simulated_target_pred_uv = _simulate_prefs(target_pred_uv, categories, simulated_cats)
-    simulated_vars = ['gender'] if mode == 'if_i_were' else simulated_cats.keys()
-    control_vars = list(set(all_vars) - set(simulated_vars))
-    cf_condition = 'F'
+#     # Set counterfactual simulations
+#     simulated_target_pred_uv = _simulate_prefs(target_pred_uv, categories, simulated_cats)
+#     simulated_vars = ['gender'] if mode == 'if_i_were' else simulated_cats.keys()
+#     control_vars = list(set(all_vars) - set(simulated_vars))
+#     cf_condition = 'F'
 
-    # Construct a factual set (the focal user and nearest neighbors)
-    NN = NearestNeighbors(n_neighbors=10, radius=0.2).fit(actual_uvs)
-    nn_distances, nn_indices = NN.kneighbors(target_actual_uv.reshape(1, -1))
-    nn_indices = nn_indices.flatten().tolist()
+#     # Construct a factual set (the focal user and nearest neighbors)
+#     NN = NearestNeighbors(n_neighbors=10, radius=0.2).fit(actual_uvs)
+#     nn_distances, nn_indices = NN.kneighbors(target_actual_uv.reshape(1, -1))
+#     nn_indices = nn_indices.flatten().tolist()
 
-    df_users_actual.loc[nn_indices, 'cf_binary'] = 1
-    df_users_actual.loc[~df_users_actual.index.isin(nn_indices), 'cf_binary'] = 0
+#     df_users_actual.loc[nn_indices, 'cf_binary'] = 1
+#     df_users_actual.loc[~df_users_actual.index.isin(nn_indices), 'cf_binary'] = 0
 
-    # Install and load R packages
-    with localconverter(ro.default_converter + pandas2ri.converter):
-        # utils = rpackages.importr('utils')
-        # utils.chooseCRANmirror(ind=1)
-        # utils.install_packages("MatchIt")
-        matchit = rpackages.importr("MatchIt")
+#     # Install and load R packages
+#     with localconverter(ro.default_converter + pandas2ri.converter):
+#         # utils = rpackages.importr('utils')
+#         # utils.chooseCRANmirror(ind=1)
+#         # utils.install_packages("MatchIt")
+#         matchit = rpackages.importr("MatchIt")
 
-        df_users_actual_r = ro.conversion.py2rpy(df_users_actual)
-        df_users_pred_r = ro.conversion.py2rpy(df_users_pred)
-        categories_r = ro.vectors.StrVector(list(categories))
+#         df_users_actual_r = ro.conversion.py2rpy(df_users_actual)
+#         df_users_pred_r = ro.conversion.py2rpy(df_users_pred)
+#         categories_r = ro.vectors.StrVector(list(categories))
 
-        globalenv['dfr_if'] = df_users_actual_r
-        globalenv['categories'] = categories_r
-        globalenv['control_vars'] = control_vars
-        globalenv['data_treated'] = ''
-        globalenv['matched_indices'] = ''
-        globalenv['match'] = ''
-        globalenv['match_summary'] = ''
+#         globalenv['dfr_if'] = df_users_actual_r
+#         globalenv['categories'] = categories_r
+#         globalenv['control_vars'] = control_vars
+#         globalenv['data_treated'] = ''
+#         globalenv['matched_indices'] = ''
+#         globalenv['match'] = ''
+#         globalenv['match_summary'] = ''
 
 
-        run_matching = r('''
-            genetic_match <- matchit(
-                as.formula(paste('cf_binary ~ ', 
-                                paste(control_vars, collapse='+'), 
-                                collapse='')), data=dfr_if, method="genetic", pop.size=20)
-            match_summary = summary(genetic_match, un = FALSE)
-            data_treated <- match.data(genetic_match)
-        ''')
+#         run_matching = r('''
+#             genetic_match <- matchit(
+#                 as.formula(paste('cf_binary ~ ', 
+#                                 paste(control_vars, collapse='+'), 
+#                                 collapse='')), data=dfr_if, method="genetic", pop.size=20)
+#             match_summary = summary(genetic_match, un = FALSE)
+#             data_treated <- match.data(genetic_match)
+#         ''')
 
-        match_summary = globalenv['match_summary']
-        print('match_summary: ', match_summary)
-        print('data_treated: ', globalenv['data_treated'])
-        df_cf = globalenv['data_treated'].loc[globalenv['data_treated']['cf_binary'] == 0]
-        cf_indices = list(df_cf.index.astype('int'))
-        print('cf_indices: ', cf_indices)
+#         match_summary = globalenv['match_summary']
+#         print('match_summary: ', match_summary)
+#         print('data_treated: ', globalenv['data_treated'])
+#         df_cf = globalenv['data_treated'].loc[globalenv['data_treated']['cf_binary'] == 0]
+#         cf_indices = list(df_cf.index.astype('int'))
+#         print('cf_indices: ', cf_indices)
 
-    df_users['is_focal'] = [ 1 if idx in nn_indices else 0 for idx in df_users.index ]
-    df_users['is_cf'] = [ 1 if idx in cf_indices else 0 for idx in df_users.index ]
+#     df_users['is_focal'] = [ 1 if idx in nn_indices else 0 for idx in df_users.index ]
+#     df_users['is_cf'] = [ 1 if idx in cf_indices else 0 for idx in df_users.index ]
 
-    print('nn_indices: ', nn_indices)
-    print('cf_indices: ', cf_indices)
+#     print('nn_indices: ', nn_indices)
+#     print('cf_indices: ', cf_indices)
 
-    return df_users
+#     return df_users
 
-def get_user_space(df_users, pred_uvs):
-    # Dynamically get user space
-    dim_red = 'tsne'
-    metric = 'euclidean'
-    if dim_red == 'umap':
-        # Load the UMAP result 
-        uvs_2d = umap.UMAP(
-            n_neighbors=100,
-            min_dist=0.1,
-            random_state=42,
-            metric=metric).fit_transform(pred_uvs)
-    else:
-        uvs_2d = TSNE(
-            n_components=2, 
-            learning_rate='auto',
-            init='random', 
-            perplexity=500).fit_transform(pred_uvs)
+# def get_user_space(df_users, pred_uvs):
+#     # Dynamically get user space
+#     dim_red = 'tsne'
+#     metric = 'euclidean'
+#     if dim_red == 'umap':
+#         # Load the UMAP result 
+#         uvs_2d = umap.UMAP(
+#             n_neighbors=100,
+#             min_dist=0.1,
+#             random_state=42,
+#             metric=metric).fit_transform(pred_uvs)
+#     else:
+#         uvs_2d = TSNE(
+#             n_components=2, 
+#             learning_rate='auto',
+#             init='random', 
+#             perplexity=500).fit_transform(pred_uvs)
         
-    df_users.loc[:,'x0_pred'] = uvs_2d[:,0]
-    df_users.loc[:,'x1_pred'] = uvs_2d[:,1]
+#     df_users.loc[:,'x0_pred'] = uvs_2d[:,0]
+#     df_users.loc[:,'x1_pred'] = uvs_2d[:,1]
 
-    uvs_2d = TSNE(
-        n_components=2, 
-        learning_rate='auto',
-        init='random', 
-        perplexity=800).fit_transform(pred_uvs)
+#     uvs_2d = TSNE(
+#         n_components=2, 
+#         learning_rate='auto',
+#         init='random', 
+#         perplexity=800).fit_transform(pred_uvs)
         
-    df_users.loc[:,'x0_pred'] = uvs_2d[:,0]
-    df_users.loc[:,'x1_pred'] = uvs_2d[:,1]
+#     df_users.loc[:,'x0_pred'] = uvs_2d[:,0]
+#     df_users.loc[:,'x1_pred'] = uvs_2d[:,1]

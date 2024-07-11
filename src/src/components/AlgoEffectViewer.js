@@ -43,10 +43,6 @@ const AlgoEffectViewer = ({
       filterBubbles = users.map(d => d.filterBubble);
 
   useEffect(() => {
-    // d3-legend module: https://d3-legend.susielu.com/
-    // gradient legend bar: https://gist.github.com/HarryStevens/6eb89487fc99ad016723b901cbd57fde
-    // gradient generator tool: https://www.learnui.design/tools/gradient-generator.html
-    
     const padding = 9;
     const width = 320;
     const innerWidth = width - (padding * 2);
@@ -58,7 +54,7 @@ const AlgoEffectViewer = ({
     const renderScaleBar = (currentAlgoEff, selectedUser, selectedAlgoEff, ref, idx) => {
       const dataAlgoEff = currentAlgoEff.data,
         userAlgoEff = selectedUser[currentAlgoEff.name], 
-        isSelected = selectedAlgoEff==currentAlgoEff.name; 
+        isSelected = selectedAlgoEff === currentAlgoEff.name; 
 
       const svg = d3.select(ref.current);
       svg.selectAll('defs').remove();
@@ -104,9 +100,7 @@ const AlgoEffectViewer = ({
         .attr('d', d3.symbol().type(d3.symbolTriangle))
         .attr('transform', function(d) {
           return 'translate(' + xAlgoEffScale(userAlgoEff) + ',' + (barHeight * 2) + ')';
-        })
-        // .attr('x', xAlgoEffScale(userAlgoEff))
-        // .attr('y', 0);
+        });
     }
     
     algoEffs.forEach((currentAlgoEff, i) => {
@@ -118,15 +112,14 @@ const AlgoEffectViewer = ({
     <AlgoEffectViewerWrapper>
       <h2>Algorithmic effects </h2>
       {algoEffs.map((algoEff, i) => 
-        (<ScaleBarWrapper>
+        (<ScaleBarWrapper key={algoEff.name}>
           <div 
-            style={{ width: '90px', opacity: selectedAlgoEff==algoEff.name ? 1 : 0.2 }}
+            style={{ width: '90px', opacity: selectedAlgoEff === algoEff.name ? 1 : 0.2 }}
             onClick={() => setAlgoEff(algoEff.name)}
           >{algoEff.label}</div>&emsp;
           <svg 
             width={layout.w} 
             height={layout.h} 
-            // preserveAspectRatio="xMinYMin"
             ref={refs[i]} 
           />
         </ScaleBarWrapper>)
@@ -136,4 +129,3 @@ const AlgoEffectViewer = ({
 };
 
 export default AlgoEffectViewer;
-  
