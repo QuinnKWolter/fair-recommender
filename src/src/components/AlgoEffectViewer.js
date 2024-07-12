@@ -1,6 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
-
+import FormGroup from '@mui/material/FormGroup';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Checkbox from '@mui/material/Checkbox';
 import styled from 'styled-components';
 
 const AlgoEffectViewerWrapper = styled.div.attrs({
@@ -38,10 +40,6 @@ const AlgoEffectViewer = ({
     }
   };
 
-  const stereotypes = users.map(d => d.stereotype),
-      miscalibrations = users.map(d => d.miscalibration),
-      filterBubbles = users.map(d => d.filterBubble);
-
   useEffect(() => {
     const padding = 9;
     const width = 320;
@@ -54,7 +52,7 @@ const AlgoEffectViewer = ({
     const renderScaleBar = (currentAlgoEff, selectedUser, selectedAlgoEff, ref, idx) => {
       const dataAlgoEff = currentAlgoEff.data,
         userAlgoEff = selectedUser[currentAlgoEff.name], 
-        isSelected = selectedAlgoEff === currentAlgoEff.name; 
+        isSelected = selectedAlgoEff==currentAlgoEff.name || selectedAlgoEff=='all'; 
 
       const svg = d3.select(ref.current);
       svg.selectAll('defs').remove();
@@ -110,11 +108,10 @@ const AlgoEffectViewer = ({
 
   return (
     <AlgoEffectViewerWrapper>
-      <h2>Algorithmic effects </h2>
       {algoEffs.map((algoEff, i) => 
         (<ScaleBarWrapper key={algoEff.name}>
           <div 
-            style={{ width: '90px', opacity: selectedAlgoEff === algoEff.name ? 1 : 0.2 }}
+            style={{ width: '90px', opacity: (selectedAlgoEff==algoEff.name || selectedAlgoEff=='all') ? 1 : 0.2 }}
             onClick={() => setAlgoEff(algoEff.name)}
           >{algoEff.label}</div>&emsp;
           <svg 
@@ -123,7 +120,24 @@ const AlgoEffectViewer = ({
             ref={refs[i]} 
           />
         </ScaleBarWrapper>)
-      )}  
+      )}
+      <FormGroup>
+        <FormControlLabel 
+          sx={{ 
+            '& .MuiFormControlLabel-label': { fontSize: '0.9rem' },
+            marginTop: '-7px'
+          }}
+          control={
+            <Checkbox 
+              defaultChecked 
+              size="small" 
+              sx={{ '& .MuiSvgIcon-root': { fontSize: 15 } }}/>
+          } 
+          checked={(selectedAlgoEff == 'all' ? true : false)}
+          // onChange={(event) => (selectedAlgoEff == 'all' ? true : false)}
+          label="All" 
+        />
+      </FormGroup>
     </AlgoEffectViewerWrapper>
   );
 };

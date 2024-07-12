@@ -10,30 +10,35 @@ import './App.css';
 const Container = styled.div.attrs({
   className: 'container'
 })`
-  width: 80%;
-  margin: 10px auto;
+  width: 100%; /* Change to 100% to utilize full width */
+  margin: auto;
   font-size: 0.9rem;
   font-family: sans-serif;
   color: #404040;
 `;
 
 const GridContainer = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 20px;
+  display: flex;
+  justify-content: space-between; /* Add this line */
   width: 100%;
 `;
 
 const UserSection = styled.div`
-  grid-column: 1 / span 1;
+  flex: 1; /* Make each section take 1/3rd of the width */
+  padding: 0px 10px;
+  box-sizing: border-box;
 `;
 
 const CounterfactualSection = styled.div`
-  grid-column: 2 / span 1;
+  flex: 1; /* Make each section take 1/3rd of the width */
+  padding: 0px 10px;
+  box-sizing: border-box;
 `;
 
 const ExplorerSection = styled.div`
-  grid-column: 3 / span 1;
+  flex: 1; /* Make each section take 1/3rd of the width */
+  padding: 0px 10px;
+  box-sizing: border-box;
 `;
 
 function App() {
@@ -42,18 +47,18 @@ function App() {
   const [users, setUsers] = useState();
   const [meanPref, setMeanPref] = useState([4.9327693, 6.887655]);
   const [group, setGroup] = useState('stereotype');
+  const [selectedAlgoEff, setAlgoEff] = useState('all');
   const [protos, setProtos] = useState([]);
-  const [selectedAlgoEff, setAlgoEff] = useState('stereotype');
+  const [clusterMode, setClusterMode] = useState('stereotype'); // 'all' or one of algorithmic effects
 
   const getData = () => {
     axios.get('http://localhost:8000/data/loadData/')
       .then((res) => {
-        const protos = res.data.users.filter(d => d.is_proto === true);
+        // Encode prototypes and cluster information based on 
         setUsers(res.data.users);
-        setProtos(protos);
-      }).catch(err => console.error('Error', err));
-  };
-
+        setProtos(res.data.users.filter(d => d['is_proto_' + clusterMode] != 'False'));
+      }).catch(err => console.error('Error'))
+  }
   const initialized = useRef(false);
 
   useEffect(() => {
