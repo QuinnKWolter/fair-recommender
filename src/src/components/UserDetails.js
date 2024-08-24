@@ -251,9 +251,9 @@ const UserDetails = ({ selectedUserId, setSelectedUserId, users }) => {
         <UserInfo>
           <img src="https://via.placeholder.com/50" alt="User" />
           <div>
-            <span>User 2</span>
+            <span>User 4107</span>
             <span>Gender: F</span>
-            <span>Age Range: 35-45</span>
+            <span>Age Range: 25-35</span>
           </div>
         </UserInfo>
         <StyledButton>If I were...</StyledButton>

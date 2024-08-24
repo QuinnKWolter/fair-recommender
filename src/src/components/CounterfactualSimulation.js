@@ -163,9 +163,9 @@ const CounterfactualSimulation = () => {
       <UserInfo>
         <img src="https://via.placeholder.com/50" alt="User" />
         <div>
-          <span>User 4</span>
+          <span>User 549</span>
           <span>Gender: M</span>
-          <span>Age Range: 35-45</span>
+          <span>Age Range: 25-35</span>
         </div>
       </UserInfo>
 

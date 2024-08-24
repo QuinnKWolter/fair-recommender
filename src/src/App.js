@@ -42,8 +42,8 @@ const ExplorerSection = styled.div`
 `;
 
 function App() {
-  const [selectedUserId, setSelectedUserId] = useState(2);
-  const [cfUserId, setCfUserId] = useState(11);
+  const [selectedUserId, setSelectedUserId] = useState(4107);
+  const [cfUserId, setCfUserId] = useState(549);
   const [users, setUsers] = useState();
   const [meanPref, setMeanPref] = useState([4.9327693, 6.887655]);
   const [group, setGroup] = useState('stereotype');
