@@ -42,10 +42,6 @@ const AlgoEffectViewer = ({
   };
 
   useEffect(() => {
-    // d3-legend module: https://d3-legend.susielu.com/
-    // gradient legend bar: https://gist.github.com/HarryStevens/6eb89487fc99ad016723b901cbd57fde
-    // gradient generator tool: https://www.learnui.design/tools/gradient-generator.html
-    
     const padding = 9;
     const width = 320;
     const innerWidth = width - (padding * 2);
@@ -99,9 +95,7 @@ const AlgoEffectViewer = ({
         .attr('d', d3.symbol().type(d3.symbolTriangle))
         .attr('transform', function(d) {
           return 'translate(' + xAlgoEffScale(userAlgoEff) + ',' + (barHeight * 2) + ')';
-        })
-        .attr('x', xAlgoEffScale(userAlgoEff))
-        .attr('y', 0);
+        });
     }
     
     algoEffs.forEach((currentAlgoEff, i) => {
@@ -118,9 +112,8 @@ const AlgoEffectViewer = ({
 
   return (
     <AlgoEffectViewerWrapper>
-      <h2>Algorithmic harms </h2>
       {algoEffs.map((algoEff, i) => 
-        (<ScaleBarWrapper>
+        (<ScaleBarWrapper key={algoEff.name}>
           <div 
             style={{ width: '90px', opacity: (selectedAlgoEff==algoEff.name || selectedAlgoEff=='all') ? 1 : 0.2 }}
             onClick={() => setAlgoEff(algoEff.name)}
@@ -128,14 +121,16 @@ const AlgoEffectViewer = ({
           <svg 
             width={layout.w} 
             height={layout.h} 
-            // preserveAspectRatio="xMinYMin"
             ref={refs[i]} 
           />
         </ScaleBarWrapper>)
       )}
       <FormGroup>
         <FormControlLabel 
-          sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.9rem' } }}
+          sx={{ 
+            '& .MuiFormControlLabel-label': { fontSize: '0.9rem' },
+            marginTop: '-7px'
+          }}
           control={
             <Checkbox 
               defaultChecked 
@@ -152,4 +147,3 @@ const AlgoEffectViewer = ({
 };
 
 export default AlgoEffectViewer;
-  

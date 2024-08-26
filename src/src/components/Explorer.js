@@ -1,16 +1,24 @@
 import React, { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 import d3tooltip from 'd3-tooltip';
-
-import styled from 'styled-components';
-
+import { Box, Typography, Paper } from '@mui/material';
+import { styled } from '@mui/system';
 import AlgoEffectViewer from './AlgoEffectViewer';
 
-const ExplorerWrapper = styled.div.attrs({
-    className: 'explorer_wrapper'
-  })`
-    // grid-area: e;
-  `;
+const ExplorerWrapper = styled(Paper)({
+  padding: '0px 20px 10px 20px',
+  marginTop: '5px',
+  width: '90%',
+  height: 'auto',
+  textAlign: 'left',
+  borderRadius: '10px',
+});
+
+const Header = styled(Typography)({
+  fontSize: '1.5rem',
+  fontWeight: 'bold',
+  marginBottom: '20px',
+});
 
 const tooltip = d3tooltip(d3);
 
@@ -484,10 +492,6 @@ const Explorer = ({
           miscalibration: ${d.miscalibration}
           stereotype: ${d.stereotype}
           filterBubble: ${d.filterBubble}
-          actualUVs: ${actualUVs[d.idx][17]}, ${actualUVs[d.idx][0]}
-          predUVs: ${predUVs[d.idx][17]}, ${predUVs[d.idx][0]}
-          actualUVs: ${actualUVs[d.idx]}
-          predUVs: ${predUVs[d.idx]}
         `)
       })
       .on('mouseout', function(d) {
@@ -723,6 +727,7 @@ const Explorer = ({
 
   return (
     <ExplorerWrapper>
+      <Header>Algorithmic Effects</Header>
       <AlgoEffectViewer 
         algoEffs={algoEffs}
         selectedAlgoEff={selectedAlgoEff}
@@ -735,6 +740,7 @@ const Explorer = ({
           filterBubble: filterBubbleColorScale
         }}
       />
+      <Header>User Space</Header>
       <svg 
         width={layout.w} 
         height={layout.h} 
