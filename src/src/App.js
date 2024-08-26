@@ -28,20 +28,28 @@ const Container = styled.div.attrs({
 `;
 
 function App() {
-  const [ selectedUserId, setSelectedUserId ] = useState(2);
-  const [ cfUserId, setCfUserId ] = useState(11);
+  const [ selectedUserId, setSelectedUserId ] = useState(4107);
+  const [ cfUserId, setCfUserId ] = useState(549);
   const [ users, setUsers ] = useState();
   const [ meanPref, setMeanPref ] = useState([ 4.9327693, 6.887655 ]);
   const [ group, setGroup ] = useState('stereotype');
   const [ selectedAlgoEff, setAlgoEff ] = useState('all');
   const [ protos, setProtos ] = useState([]);
+  const [ actualUVs, setActualUVs ] = useState([]);
+  const [ predUVs, setPredUVs ] = useState([]);
+  const [ categories, setCategories ] = useState([]);
   const [ clusterMode, setClusterMode ] = useState('stereotype'); // 'all' or one of algorithmic effects
 
   const getData = () => {
     axios.get('http://localhost:8000/data/loadData/')
       .then((res) => {
-        // Encode prototypes and cluster information based on 
+        res.data.users.forEach((d, i) => {
+          res.data.users[i].filterBubble = -d.filterBubble
+        })
         setUsers(res.data.users);
+        setActualUVs(res.data.actualUVs);
+        setPredUVs(res.data.predUVs);
+        setCategories(res.data.categories);
         setProtos(res.data.users.filter(d => d['is_proto_' + clusterMode] != 'False'));
       }).catch(err => console.error('Error'))
   }
@@ -103,6 +111,9 @@ function App() {
         selectedAlgoEff={selectedAlgoEff}
         meanPref={meanPref}
         setAlgoEff={setAlgoEff}
+        actualUVs={actualUVs}
+        predUVs={predUVs}
+        categories={categories}
       />
     </Container>
   );

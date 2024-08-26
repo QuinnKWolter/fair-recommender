@@ -23,7 +23,8 @@ const AlgoEffectViewer = ({
   selectedAlgoEff,
   selectedUser,
   users,
-  setAlgoEff
+  setAlgoEff,
+  colorScales
 }) => {
   let refs = Array(3).fill(0);
   
@@ -53,7 +54,7 @@ const AlgoEffectViewer = ({
 
     d3.selectAll('.g_scale_bar').remove();
 
-    const renderScaleBar = (currentAlgoEff, selectedUser, selectedAlgoEff, ref, idx) => {
+    const renderScaleBar = (currentAlgoEff, selectedUser, selectedAlgoEff, currentAlgoEffColorScale, ref, idx) => {
       const dataAlgoEff = currentAlgoEff.data,
         userAlgoEff = selectedUser[currentAlgoEff.name], 
         isSelected = selectedAlgoEff==currentAlgoEff.name || selectedAlgoEff=='all'; 
@@ -65,10 +66,6 @@ const AlgoEffectViewer = ({
       const xAlgoEffScale = d3.scaleLinear()
         .domain(d3.extent(dataAlgoEff))
         .range([0, innerWidth]);
-
-      const colorScale = d3.scaleLinear()
-          .domain(dataDomain)
-          .range(['blue', 'whitesmoke', 'red']);
 
       const xAxis = d3.axisBottom(xAlgoEffScale)
           .tickSize(barHeight * 2)
@@ -84,13 +81,13 @@ const AlgoEffectViewer = ({
           .data(dataDomain)
           .enter().append("stop")
           .attr("offset", d => ((xAlgoEffScale(d)-xAlgoEffScale(dataDomain[0]))/(xAlgoEffScale(dataDomain[2])-xAlgoEffScale(dataDomain[0])) * 100) + '%')
-          .attr("stop-color", d => colorScale(d));
+          .attr("stop-color", d => currentAlgoEffColorScale(d));
 
       g.append("rect")
           .attr("width", innerWidth)
           .attr("height", barHeight)
           .style("fill", "url(#scale_bar_gradient_" + currentAlgoEff.name + ")")
-          .style('stroke', 'black')
+          .style('stroke', 'None')
           .style('stroke-width', 1);
 
       g.append("g")
@@ -103,18 +100,25 @@ const AlgoEffectViewer = ({
         .attr('transform', function(d) {
           return 'translate(' + xAlgoEffScale(userAlgoEff) + ',' + (barHeight * 2) + ')';
         })
-        // .attr('x', xAlgoEffScale(userAlgoEff))
-        // .attr('y', 0);
+        .attr('x', xAlgoEffScale(userAlgoEff))
+        .attr('y', 0);
     }
     
     algoEffs.forEach((currentAlgoEff, i) => {
-      renderScaleBar(currentAlgoEff, selectedUser, selectedAlgoEff, refs[i], i);
+      renderScaleBar(
+        currentAlgoEff, 
+        selectedUser, 
+        selectedAlgoEff, 
+        colorScales[currentAlgoEff.name], 
+        refs[i], 
+        i
+      );
     });
   }, [refs[0].current, refs[1].current, refs[2].current, selectedAlgoEff])
 
   return (
     <AlgoEffectViewerWrapper>
-      <h2>Algorithmic effects </h2>
+      <h2>Algorithmic harms </h2>
       {algoEffs.map((algoEff, i) => 
         (<ScaleBarWrapper>
           <div 

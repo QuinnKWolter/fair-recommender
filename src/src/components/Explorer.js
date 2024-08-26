@@ -22,7 +22,10 @@ const Explorer = ({
   protos,
   selectedAlgoEff,
   meanPref,
-  setAlgoEff
+  setAlgoEff,
+  actualUVs,
+  predUVs,
+  categories
 }) => {
   const ref = useRef(null);
   const layout = {
@@ -34,7 +37,10 @@ const Explorer = ({
       proto: { r: 8 },
       selected: { r: 11 },
     },
-    
+    stereotypeBar: {
+      user: 5,
+      proto: 10
+    },
     concentricCircles: {
       r: [0, 60, 120, 170, 210]
     }
@@ -61,12 +67,20 @@ const Explorer = ({
 
   const stereotypeColorScale = d3
     .scaleLinear()
-    .domain([d3.min(users.map(d => d.stereotype)), 0, d3.max(users.map(d => d.stereotype))])
-    .range(['blue', 'whitesmoke', 'red']);
+    .domain([d3.min(users.map(d => d.stereotype)), 0, 0.2])
+    .range(['lightgray', 'white', 'red']);
+
+  const stereotypeUserBarScale = d3.scaleLinear()
+    .domain([d3.min(users.map(d => d.stereotype)), 0, 0.2])
+    .range([layout.stereotypeBar.user, layout.stereotypeBar.user, layout.stereotypeBar.user*1.5]);
+
+  const stereotypeProtoBarScale = d3.scaleLinear()
+    .domain([d3.min(users.map(d => d.stereotype)), 0, 0.2])
+    .range([layout.stereotypeBar.proto, layout.stereotypeBar.proto, layout.stereotypeBar.proto*1.5]);
 
   const miscalibrationColorScale = d3
     .scaleLinear()
-    .domain([0, d3.max(users.map(d => d.miscalibration))])
+    .domain([0, 10])
     .range(['white', 'red']);
 
   const filterBubbleRadiusScaleForProtos = d3
@@ -85,7 +99,7 @@ const Explorer = ({
   const filterBubbleColorScale = d3
     .scaleLinear()
     .domain([d3.min(users.map(d => d.filterBubble)), 0, d3.max(users.map(d => d.filterBubble))])
-    .range(['blue', 'white', 'red']);
+    .range(['lightgray', 'white', 'red']);
 
   const typicalityColorScale = d3
     .scaleLinear()
@@ -98,7 +112,7 @@ const Explorer = ({
       .range([layout.circle.proto.r-3, layout.circle.proto.r+3]),
     diversityRadiusScaleForUsers = d3
       .scaleLinear()
-      .domain([d3.min(users.map(d => d.pred_entropy)), d3.max(users.map(d => d.pred_entropy))])
+      .domain([d3.min(users.map(d => d.actual_entropy)), d3.max(users.map(d => d.actual_entropy))])
       .range([layout.circle.all.r-2, layout.circle.all.r+3]),
     diversityRadiusScaleForSelected = d3
       .scaleLinear()
@@ -112,8 +126,8 @@ const Explorer = ({
     svg.select('.g_users').remove();
 
     const gLayout = svg.append('g').attr('class', 'g_layout'),
-      gUsers = svg.selectAll('.g_users').data(users),
-      gProtoUsers = svg.selectAll('.g_protos').data(protos);
+      gUsers = svg.selectAll('.g_user').data(users),
+      gProtoUsers = svg.selectAll('.g_proto').data(protos);
     let gSelected = svg.selectAll('.g_selected'),
       gCF = svg.selectAll('.g_counterfactual'),
       gSelectedUsersActualSelected = svg.selectAll('.g_actual_selected'),
@@ -151,7 +165,8 @@ const Explorer = ({
     gUsers
       .enter()
       .append('g')
-      .attr('class', 'g_users')
+      // .filter(d => (d.stereotype > 0) && (d.gender == 'M') && (d.filterBubble > 0))
+      .attr('class', 'g_user')
       .attr('transform', function(d) {
         return 'translate(' + xScale(d.x0_pred) + ',' + yScale(d.x1_pred) + ')';
       })
@@ -160,11 +175,12 @@ const Explorer = ({
     gProtoUsers
       .enter()
       .append('g')
-      .attr('class', 'g_protos')
+      .attr('class', 'g_proto')
       .attr('transform', function(d) {
         return 'translate(' + xScale(d.x0_pred) + ',' + yScale(d.x1_pred) + ')';
       })
-      .style('opacity', 1);
+      .style('opacity', 1)
+      .style('filter', 'drop-shadow(0px 2px 2px rgba(0, 0, 0, 0.7))');
       
     if (selectedAlgoEff == 'all') {
       renderGlyphs(
@@ -172,7 +188,8 @@ const Explorer = ({
         gProtoUsers, 
         diversityRadiusScaleForProtos,
         filterBubbleRadiusScaleForProtos,
-        miscalibrationColorScale
+        miscalibrationColorScale,
+        stereotypeProtoBarScale
       );
   
       renderGlyphs(
@@ -180,27 +197,14 @@ const Explorer = ({
         gUsers, 
         diversityRadiusScaleForUsers,
         filterBubbleRadiusScaleForUsers,
-        miscalibrationColorScale
+        miscalibrationColorScale,
+        stereotypeUserBarScale
       );
     } else { 
       renderProtos(gProtoUsers, selectedAlgoEff, colorScale); 
-      renderUsers(gUsers, selectedAlgoEff, colorScale);
+      renderUsers(svg, gUsers, selectedAlgoEff, colorScale);
     }
     
-
-    svg
-      .append('defs')
-      .append('marker')
-      .attr('id', 'arrow')
-      .attr('viewBox', [0, 0, 5, 5])
-      .attr('refX', 2.5)
-      .attr('refY', 2.5)
-      .attr('markerWidth', 5)
-      .attr('markerHeight', 5)
-      .attr('orient', 'auto-start-reverse')
-      .append('path')
-      .attr('d', d3.line()([[0, 0], [0, 5], [5, 2.5]]))
-      .attr('stroke', 'black');
 
     //***** Render selected and counterfactual users
     const dataSelectedUser = users.filter(d => d.userID === selectedUserId);
@@ -214,6 +218,8 @@ const Explorer = ({
       const gSelectedUser = (userType == 'selected') ? gSelected : gCF;
       const gUserPred = (userType == 'selected') ? gSelectedUsersPredSelected : gSelectedUsersPredCF;
       const gUserActual = (userType == 'selected') ? gSelectedUsersActualSelected : gSelectedUsersActualCF;
+      
+      gSelectedUser.selectAll('line').remove();
 
       gSelectedUser
         .data(dataSelected)
@@ -222,8 +228,7 @@ const Explorer = ({
         .attr('class', 'g_' + userType)
         .attr('transform', function(d) {
           return 'translate(' + xScale(d.x0_pred) + ',' + yScale(d.x1_pred) + ')';
-        })
-        .style('opacity', 1);
+        });
 
       if (selectedAlgoEff == 'all') {
         renderGlyphs(
@@ -231,7 +236,8 @@ const Explorer = ({
           gSelectedUser, 
           diversityRadiusScaleForSelected,
           filterBubbleRadiusScaleForSelected,
-          miscalibrationColorScale
+          miscalibrationColorScale,
+          stereotypeProtoBarScale
         );
 
         gSelectedUser
@@ -270,8 +276,39 @@ const Explorer = ({
         })
     });
 
-    
-  }, [ref.current, selectedAlgoEff, users, group])
+    svg
+      .append('defs')
+      .append('marker')
+      .attr('id', 'arrow')
+      .attr('viewBox', [0, 0, 5, 5])
+      .attr('refX', 2.5)
+      .attr('refY', 2.5)
+      .attr('markerWidth', 5)
+      .attr('markerHeight', 5)
+      .attr('orient', 'auto-start-reverse')
+      .append('path')
+      .attr('d', d3.line()([[0, 0], [0, 5], [5, 2.5]]))
+      // .attr('stroke', 'red');
+      .style('fill', 'red')
+      .style('opacity', 0.1);
+
+    svg
+      .append('defs')
+      .append('marker')
+      .attr('id', 'arrow2')
+      .attr('viewBox', [0, 0, 5, 5])
+      .attr('refX', 2.5)
+      .attr('refY', 2.5)
+      .attr('markerWidth', 5)
+      .attr('markerHeight', 5)
+      .attr('orient', 'auto-start-reverse')
+      .append('path')
+      .attr('d', d3.line()([[0, 0], [0, 5], [5, 2.5]]))
+      // .attr('stroke', 'red');
+      .style('fill', 'red')
+      .style('opacity', 1);
+
+  }, [ref.current, selectedAlgoEff, users, group]);
 
   const renderProtos = (gProtoUsers, selectedAlgoEff, colorScale) => {
     gProtoUsers
@@ -287,39 +324,80 @@ const Explorer = ({
       .style('fill', d => colorScale(d[selectedAlgoEff]));
   }
 
-  const renderSelectedUsers = (userType, gSelectedUsers, selectedAlgoEff, colorScale) => {
-    gSelectedUsers
-      .append('circle')
-      .attr('class', 'user_circle')
-      .attr('cx', 0)
-      .attr('cy', 0)
-      .attr('r', layout.circle.selected.r)
-      .style('opacity', 1)
-      .style('fill', d => colorScale(d[selectedAlgoEff]))
-      .style('stroke', 'black')
-      .style('stroke-width', 2);
-
-    gSelectedUsers
-      .append('text')
-      .attr('x', 0)
-      .attr('y', 0)
-      .style('stroke', 'white')
-      .style('stroke-width', 0.5)
-      .style('fill', 'black')
-      .style('font-weight', 'bold')
-      .text(userType);
-  }
-
-  const renderUsers = (gUsers, selectedAlgoEff, colorScale) => {
+  const renderUsers = (svg, gUsers, selectedAlgoEff, colorScale) => {
+    // function marker (color) {
+    //   svg
+    //     .append('defs')
+    //     .append('marker')
+    //     // .attr('id', 'arrow')
+    //     .attr('viewBox', [0, 0, 5, 5])
+    //     .attr('refX', 2.5)
+    //     .attr('refY', 2.5)
+    //     .attr('markerWidth', 5)
+    //     .attr('markerHeight', 5)
+    //     .attr('orient', 'auto-start-reverse')
+    //     .append('path')
+    //     .attr('d', d3.line()([[0, 0], [0, 5], [5, 2.5]]))
+    //     .attr('stroke', 'black')
+    //     .style('fill', color);
+  
+    //   return "url(" + color + ")";
+    // }
+    
     gUsers
       .append('circle')
       .attr('class', 'user_circle')
       .attr('cx', 0)
       .attr('cy', 0)
-      .attr('r', layout.circle.all.r)
-      .style('opacity', 0.2)
+      .attr('r', d => diversityRadiusScaleForUsers(d.pred_entropy))
+      .style('opacity', 0.1)
       .style('fill', d => colorScale(d[selectedAlgoEff]))
-      .on('mouseover', d => console.log('ste: ', d.stereotype))
+      .style('stroke', d => d3.color(colorScale(d[selectedAlgoEff])).darker(0.2))
+      .on('mouseover', function(d) {
+        d3.select(this)
+          .style('opacity', 1);
+
+        console.log(`
+          miscalibration: ${d.miscalibration}
+          stereotype: ${d.stereotype}
+          filterBubble: ${d.filterBubble}
+        `)
+      })
+      .on('mouseover', function(d) {
+        d3.select(this)
+          .style('opacity', 0.2)
+      });
+  }
+
+  const renderSelectedUsers = (userType, gSelectedUsers, selectedAlgoEff, colorScale) => {
+    gSelectedUsers
+      .append('circle')
+      .attr('class', 'user_circle_selected')
+      // .attr('cx', d => xScale(d.x0_pred))
+      // .attr('cy', d => yScale(d.x1_pred))
+      .attr('cx', d => 0)
+      .attr('cy', d => 0)
+      .attr('r', d => diversityRadiusScaleForSelected(d.pred_entropy))
+      .style('opacity', 1)
+      .style('fill', d => colorScale(d[selectedAlgoEff]))
+      .style('stroke', 'black')
+      .style('stroke-width', 2)
+      .on('mouseover', d => {
+        selectedAlgoEff == 'miscalibration' ? renderMiscalibrationExp(userType, gSelectedUsers)
+          : (selectedAlgoEff == 'stereotype' 
+            ? renderStereotypeExp(userType, gSelectedUsers, meanPref)
+            : renderFilterBubbleExp(userType, gSelectedUsers));
+      });
+
+    gSelectedUsers
+      .append('text')
+      .attr('cx', d => xScale(d.x0_pred))
+      .attr('cy', d => yScale(d.x1_pred))
+      .style('stroke', 'white')
+      .style('stroke-width', 0.5)
+      .style('fill', 'black')
+      .style('font-weight', 'bold')
+      .text(userType);
   }
 
   const renderLayout = (gLayout) => {
@@ -350,21 +428,21 @@ const Explorer = ({
     
     // text for 'typical'
     gLayout.append('text')
-      .attr("x", xScale(meanPref[0]) + 10)
-      .attr("y", yScale(meanPref[1]) + 10)
+      .attr("x", xScale(meanPref[0]) + 7)
+      .attr("y", yScale(meanPref[1]) + 12)
       .style('font-style', 'italic')
-      .style('font-size', '0.7rem')
-      .style('fill', 'gray')
-      .text('typical');
+      .style('font-size', '0.8rem')
+      .style('fill', 'black')
+      .text('Typical');
 
     // text for 'atypical'
     gLayout.append('text')
       .attr("x", xScale(meanPref[0]) + layout.concentricCircles.r[layout.concentricCircles.r.length-1] - 10)
-      .attr("y", yScale(meanPref[1]) + 10)
+      .attr("y", yScale(meanPref[1]) + 12)
       .style('font-style', 'italic')
-      .style('font-size', '0.7rem')
-      .style('fill', 'gray')
-      .text('atypical');
+      .style('font-size', '0.8rem')
+      .style('fill', 'black')
+      .text('Atypical');
 
     //***** Render concentric circles to indicate the typicality centering the meanPref
     layout.concentricCircles.r.forEach((r, i) => {
@@ -385,11 +463,38 @@ const Explorer = ({
     gUsers, 
     diversityRadiusScale,
     filterBubbleRadiusScale,
-    miscalibrationColorScale
+    miscalibrationColorScale,
+    stereotypeBarScale
   ) => {
-    const opacityForActual = ((mode == 'proto') || (mode == 'selected')) ? 1 : 0.2;
-    const opacityForPred = ((mode == 'proto') || (mode == 'selected')) ? 1 : 0.5;
-    const opacityForStereotype = ((mode == 'proto') || (mode == 'selected')) ? 1 : 0.3;
+    // 0.5/0.5/0.25 or 0.05/0.05/0.025
+    const opacityForActual = ((mode == 'proto') || (mode == 'selected')) ? 1 : 0.05;
+    const opacityForPred = ((mode == 'proto') || (mode == 'selected')) ? 1 : 0.05;
+    const opacityForStereotype = ((mode == 'proto') || (mode == 'selected')) ? 1 : 0.025;
+
+    gUsers
+      .on('mouseover', function(d) {
+        d3.select(this)
+          .selectAll('*')
+          .attr('opacity', 1);
+
+        console.log(`
+          id: ${d.userID}
+          gender: ${d.gender}
+          age: ${d.age}
+          miscalibration: ${d.miscalibration}
+          stereotype: ${d.stereotype}
+          filterBubble: ${d.filterBubble}
+          actualUVs: ${actualUVs[d.idx][17]}, ${actualUVs[d.idx][0]}
+          predUVs: ${predUVs[d.idx][17]}, ${predUVs[d.idx][0]}
+          actualUVs: ${actualUVs[d.idx]}
+          predUVs: ${predUVs[d.idx]}
+        `)
+      })
+      .on('mouseout', function(d) {
+        d3.select(this)
+          .selectAll('*')
+          .attr('opacity', 0.2);
+      });
 
     gUsers
       .append('circle')
@@ -410,14 +515,14 @@ const Explorer = ({
 
     gUsers
       .append('circle')
-      .attr('class', 'glyph_pred' + mode)
+      .attr('class', 'glyph_pred_' + mode)
       .attr('cx', 0)
       .attr('cy', 0)
       .attr('opacity', opacityForPred)
       .attr('r', d => diversityRadiusScale(d.pred_entropy) + filterBubbleRadiusScale(d.filterBubble))
       .style('fill', d => miscalibrationColorScale(d.miscalibration))
-      .style('stroke', d => 'white')
-      .style('stroke-width', 2)
+      .style('stroke', d => mode == 'selected' ? 'black' : 'white')
+      .style('stroke-width', 1)
       // .style('fill-opacity', 0.4)
       .on('mouseover', function(d) {
         const data = d3.select(this).data()[0];
@@ -425,56 +530,99 @@ const Explorer = ({
 
     gUsers
       .append("path")
-      .attr( "class", "glyph_stereotype")
-      .style( "stroke", "#000")
+      .attr("class", "glyph_stereotype_" + mode)
+      .style("stroke", d => stereotypeColorScale(d.stereotype))
       .style('opacity', opacityForStereotype)
       // .attr('marker-start', (d) => "url(#arrow)")//attach the arrow from defs
-      .style( "stroke-width", 0.5)
-      .attr("d", (d) => {
-        const theta = Math.atan2((d.x0_actual-d.x0_pred), (d.x1_actual-d.x1_pred));
-        const length = 5;
-        return "M" + 0 + "," + 0 + "," + (length*Math.cos(theta)) + "," + (length*Math.sin(theta))
+      .style("stroke-width", mode == 'user' ? 0.5 : 2)
+      .attr("d", d => {
+        const theta = Math.atan2((meanPref[0]-d.x0_pred), (meanPref[1]-d.x1_pred));
+        const length = stereotypeBarScale(d.stereotype);
+        return "M" + 0 + "," + 0 + "," + (length*Math.cos(theta - 89.5)) + "," + (length*Math.sin(theta - 89.5))
       });
   }
 
-  const renderStereotype = (userType, dataUsers, meanPref, gUserActual, gUserPred) => {
-
-    gUserPred.selectAll('circle').remove();
-    gUserPred.selectAll('path').remove();
-    gUserPred.selectAll('line').remove();
-    gUserActual.selectAll('circle').remove();
-    gUserActual.selectAll('path').remove();
-    gUserActual.selectAll('line').remove();
-
-    gUserPred
-      .data(dataUsers)
-      .enter()
-      .append('g')
-      .attr('class', 'g_pred_' + userType)
-      .attr('transform', function(d) {
-        return 'translate(' + xScale(d.x0_pred) + ',' + yScale(d.x1_pred) + ')';
-      });
-
-    const userPredCircle = gUserPred
-      .append('circle')
-      .attr('class', 'pred_circle_' + userType)
-      .attr('cx', 0)
-      .attr('cy', 0)
-      .attr('r', layout.circle.selected.r)
-      .style('stroke', 'black')
-      .style('stroke-width', 2)
-      .style('fill-opacity', 1)
+  const renderStereotypeExp = (userType, gSelectedUsers) => {
+    // Circle for pred
+    gSelectedUsers
+      .select('circle')
       .on('mouseover', function(d, i) {
         const data = d3.select(this).data()[0];
 
         d3.select(this)
           .style('stroke-width', 3);
+        const user = userType == 'selected' ? `User ${d.userID}` : `Counterfactual`;
+        // const text =
+        //   `<div style="font-weight: 600">
+        //     ${user}'s overall recommendation was <br /> 
+        //     stereotyped towards the average preference <br />
+        //     than original preference. <br />
+        //   </div>`;
+
+        // tooltip.html(text);
+        // tooltip.show();
+      })
+      .on('mouseout', function(d, i) {
+        d3.select(this)
+          .style('stroke-width', 2);
+        tooltip.hide();
+      });
+
+    gSelectedUsers
+      .append("line")
+      .attr( "class", "from_actual_to_mean_pref")
+      .attr('x1', d => xScale(d.x0_actual) - xScale(d.x0_pred))
+      .attr('y1', d => yScale(d.x1_actual) - yScale(d.x1_pred))
+      .attr('x2', d => xScale(meanPref[0]) - xScale(d.x0_pred))
+      .attr('y2', d => yScale(meanPref[1]) - yScale(d.x1_pred))
+      .style("stroke", "black")
+      .style('opacity', 1)
+      .style("stroke-width", 1)
+      .style('stroke-dasharray', '4,3');
+
+    gSelectedUsers
+      .append("line")
+      .attr( "class", "from_pred_to_mean_pref")
+      .attr('x1', d => xScale(meanPref[0]) - xScale(d.x0_pred))
+      .attr('y1', d => yScale(meanPref[1]) - yScale(d.x1_pred))
+      // .attr('x2', d => xScale(meanPref[0]))
+      // .attr('y2', d => yScale(meanPref[1]))
+      .attr('x2', d => {
+        const theta = Math.atan2((yScale(meanPref[1]) - yScale(d.x1_pred)), (xScale(meanPref[0]) - xScale(d.x0_pred)));
+        return layout.circle.selected.r * Math.cos(theta);
+      })
+      .attr('y2', d => {
+        const theta = Math.atan2((yScale(meanPref[1]) - yScale(d.x1_pred)), (xScale(meanPref[0]) - xScale(d.x0_pred)));
+        return layout.circle.selected.r * Math.sin(theta);
+      })
+      .style("stroke", "black")
+      .style('opacity', 1)
+      .style("stroke-width", 1)
+      .style('stroke-dasharray', '4,2');
+
+    gSelectedUsers
+      .append('circle')
+      .attr('class', 'user_circle_actual')
+      .attr('cx', d => xScale(d.x0_actual) - xScale(d.x0_pred))
+      .attr('cy', d => yScale(d.x1_actual) - yScale(d.x1_pred))
+      .attr('r', 8)
+      .style('stroke', 'black')
+      .style('stroke-width', 1)
+      .style('stroke-dasharray', '4,2')
+      .style('fill-opacity', 0.9)
+      .style('fill', 'white')
+      .on('mouseover', function(d, i) {
+        const data = d3.select(this).data()[0];
+        d3.selectAll('.from_pred_to_mean_pref').lower();
+        d3.select(this).raise();
+        d3.select(this)
+          .style('stroke-width', 3);
         const user = userType == 'selected' ? `User ${d.userID}` : `Counterfactual user`;
         const text =
           `<div style="font-weight: 600">
-            ${user} is stereotyped: <br />
-            The user's overall recommendation is closer to <br />
-            the average preference than original preference. <br />
+            ${user}'s original preference <br />
+            was deviated from the mean preference <br />
+            than 70% of users.
           </div>`;
 
         tooltip.html(text);
@@ -486,41 +634,70 @@ const Explorer = ({
         tooltip.hide();
       });
 
-    userPredCircle
-      .style('fill', d => {
-        let circleColor = '';
-        if (group === '') circleColor ='gray';
-        else if (group === 'gender') circleColor = genderColorScale(d.gender);
-        else if (group === 'stereotype') circleColor = stereotypeColorScale(d.stereotype);
-        else if (group === 'miscalibration') circleColor = miscalibrationColorScale(d.miscalibration)
-        else if (group === 'filterBubble') circleColor = filterBubbleColorScale(d.filterBubble);
-        else if (group === 'atypicality') circleColor = typicalityColorScale(d.pred_dev);
+    //***** Line representing stereotype
+    // gSelectedUsers
+    //   .append("path")
+    //   .attr("class", "link")
+    //   .style("stroke", "#000")
+    //   .style('opacity', 1)
+    //   .style("stroke-width", 1.5)
+    //   .attr("d", (d) => {
+    //     const theta = Math.atan2((yScale(d.x1_pred)-yScale(d.x1_actual)), (xScale(d.x0_pred)-xScale(d.x0_actual)));
+    //     const length = 15
+    //     return "M" + 0 + "," + 0 + "," + (length*Math.cos(theta)) + "," + (length*Math.sin(theta))
+    //   });
 
-        miscalibrationColorScale(d.miscalibration);
+    //***** Arrow from actual to pred
+    gSelectedUsers
+      .append("line")
+      .attr( "class", "from_actual_to_pred")
+      .attr('x1', d => xScale(d.x0_actual) - xScale(d.x0_pred))
+      .attr('y1', d => yScale(d.x1_actual) - yScale(d.x1_pred))
+      .attr('x2', d => {
+        const theta = Math.atan2((yScale(d.x1_pred)-yScale(d.x1_actual)), (xScale(d.x0_pred)-xScale(d.x0_actual)));
+        return - layout.circle.selected.r * Math.cos(theta);
+      })
+      .attr('y2', d => {
+        const theta = Math.atan2((yScale(d.x1_pred)-yScale(d.x1_actual)), (xScale(d.x0_pred)-xScale(d.x0_actual)));
+        return - layout.circle.selected.r * Math.sin(theta);
+      })
+      .style("stroke", "red")
+      .style('opacity', 1)
+      .attr('marker-end', (d) => "url(#arrow2)")
+      .style("stroke-width", 2)
+      .style('filter', 'drop-shadow(0px 2px 2px rgba(0, 0, 0, 0.7))');
+      // .style('stroke-dasharray', '5,4')
+      // .attr("d", (d) => {
+      //   const theta = Math.atan2((yScale(d.x1_pred)-yScale(d.x1_actual)), (xScale(d.x0_pred)-xScale(d.x0_actual)));
+      //   const length = Math.sqrt(Math.pow(yScale(d.x1_pred)-yScale(d.x1_actual), 2)) + Math.pow((xScale(d.x0_pred)-xScale(d.x0_actual), 2))
+      //   return "M" + 0 + "," + 0 + "," + (length*Math.cos(theta)) + "," + (length*Math.sin(theta))
+      // });
 
-        return circleColor;
-      });
+    gSelectedUsers
+      .append('text')
+      .attr('x', d => xScale(d.x0_actual)-30)
+      .attr('y', d => yScale(d.x1_actual)-10)
+      .style('stroke', 'white')
+      .style('stroke-width', 0.5)
+      .style('fill', 'black')
+      .style('font-weight', 'bold')
+      .text(d => userType == 'selected' ? `User ${d.userID}` : `Counterfactual user`);
+  }
 
-    gUserActual
-      .data(dataUsers)
-      .enter()
-      .append('g')
-      .attr('class', 'g_actual_' + userType)
-      .attr('transform', function(d) {
-        return 'translate(' + xScale(d.x0_actual) + ',' + yScale(d.x1_actual) + ')';
-      });
+  const renderMiscalibrationExp = () => {};
 
-    gUserActual
+  const renderFilterBubbleExp = (userType, gSelectedUsers) => {
+    gSelectedUsers
       .append('circle')
-      .attr('class', 'actual_circle_' + userType)
-      .attr('cx', 0)
-      .attr('cy', 0)
-      .attr('r', 8)
-      .style('stroke', 'black')
-      .style('stroke-width', 1)
+      .attr('class', 'user_circle_actual')
+      .attr('cx', d => xScale(d.x0_pred))
+      .attr('cy', d => yScale(d.x1_pred))
+      .attr('r', d => diversityRadiusScaleForSelected(d.actual_entropy))
+      .style('fill', 'None')
+      .style('opacity', 1)
       .style('stroke-dasharray', '4,2')
-      .style('fill-opacity', 0.5)
-      .style('fill', 'none')
+      .style('stroke-width', 1)
+      .style('stroke', 'black')
       .on('mouseover', function(d, i) {
         const data = d3.select(this).data()[0];
 
@@ -542,78 +719,7 @@ const Explorer = ({
           .style('stroke-width', 2);
         tooltip.hide();
       });
-
-    //***** Line representing stereotype
-    gUserActual
-      .append("path")
-      .attr("class", "link")
-      .style("stroke", "#000")
-      .style('opacity', 1)
-      .style("stroke-width", 1.5)
-      .attr("d", (d) => {
-        const theta = Math.atan2((yScale(d.x1_pred)-yScale(d.x1_actual)), (xScale(d.x0_pred)-xScale(d.x0_actual)));
-        const length = 15
-        return "M" + 0 + "," + 0 + "," + (length*Math.cos(theta)) + "," + (length*Math.sin(theta))
-      });
-
-    //***** Arrow from actual to pred
-    gUserActual
-      .append("line")
-      .attr( "class", "from_actual_to_pred")
-      .attr('x1', d => 0)
-      .attr('y1', d => 0)
-      .attr('x2', d => {
-        const theta = Math.atan2((yScale(d.x1_pred)-yScale(d.x1_actual)), (xScale(d.x0_pred)-xScale(d.x0_actual)));
-        return xScale(d.x0_pred) - xScale(d.x0_actual) - ((layout.circle.selected.r) * Math.cos(theta));
-      })
-      .attr('y2', d => {
-        const theta = Math.atan2((yScale(d.x1_pred)-yScale(d.x1_actual)), (xScale(d.x0_pred)-xScale(d.x0_actual)));
-        return  + yScale(d.x1_pred) - yScale(d.x1_actual) - ((layout.circle.selected.r) * Math.sin(theta));
-      })
-      .style("stroke", "#000")
-      .style('opacity', 1)
-      .attr('marker-end', (d) => "url(#arrow)")
-      .style("stroke-width", 1)
-      .style('stroke-dasharray', '5,4')
-      // .attr("d", (d) => {
-      //   const theta = Math.atan2((yScale(d.x1_pred)-yScale(d.x1_actual)), (xScale(d.x0_pred)-xScale(d.x0_actual)));
-      //   const length = Math.sqrt(Math.pow(yScale(d.x1_pred)-yScale(d.x1_actual), 2)) + Math.pow((xScale(d.x0_pred)-xScale(d.x0_actual), 2))
-      //   return "M" + 0 + "," + 0 + "," + (length*Math.cos(theta)) + "," + (length*Math.sin(theta))
-      // });
-
-    gUserActual
-      .append('text')
-      .attr('x', 0)
-      .attr('y', 0)
-      .style('stroke', 'white')
-      .style('stroke-width', 0.5)
-      .style('fill', 'black')
-      .style('font-weight', 'bold')
-      .text(userType);
-
-    gUserActual
-      .append("line")
-      .attr( "class", "from_actual_to_mean_pref")
-      .attr('x1', d => 0)
-      .attr('y1', d => 0)
-      .attr('x2', d => xScale(meanPref[0]) - xScale(d.x0_actual))
-      .attr('y2', d => yScale(meanPref[1]) - yScale(d.x1_actual))
-      .style("stroke", "black")
-      .style('opacity', 1)
-      .style("stroke-width", 1)
-      .style('stroke-dasharray', '4,2');
-
-    gUserPred
-      .append("line")
-      .attr( "class", "from_pred_to_mean_pref")
-      .attr('x1', d => 0)
-      .attr('y1', d => 0)
-      .attr('x2', d => xScale(meanPref[0]) - xScale(d.x0_pred))
-      .attr('y2', d => yScale(meanPref[1]) - yScale(d.x1_pred))
-      .style("stroke", "red")
-      .style('opacity', 1)
-      .style("stroke-width", 1);
-  }
+  };
 
   return (
     <ExplorerWrapper>
@@ -623,6 +729,11 @@ const Explorer = ({
         users={users} 
         selectedUser={users.filter(d => d.userID === selectedUserId)[0]}
         setAlgoEff={setAlgoEff}
+        colorScales={{
+          miscalibration: miscalibrationColorScale,
+          stereotype: stereotypeColorScale,
+          filterBubble: filterBubbleColorScale
+        }}
       />
       <svg 
         width={layout.w} 

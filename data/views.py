@@ -26,22 +26,22 @@ class LoadData(APIView):
         simulated_cats = {'Drama': 0.1, 'Romance': 0.1}
         categories = ['Action', 'Adventure', 'Animation', "Childrens", 'Comedy',
             'Crime', 'Documentary', 'Drama', 'Fantasy', 'FilmNoir', 'Horror',
-            'Musical', 'Mystery', 'Romance', 'Scifi', 'Thriller', 'War',
+            'Musical', 'Mystery', 'Romance', 'Sci-fi', 'Thriller', 'War',
             'Western'
             ]
         
-        # actual_uvs = pickle.load(open('./static/data/actual_uvs_all.pkl', 'rb'))
-        # pred_uvs = pickle.load(open('./static/data/pred_uvs_all.pkl', 'rb'))
+        actual_uvs = pickle.load(open('./static/data/actual_uvs_all.pkl', 'rb'))
+        pred_uvs = pickle.load(open('./static/data/pred_uvs_all.pkl', 'rb'))
         # mean_uvs = pickle.load(open('./static/data/mean_uvs_all.pkl', 'rb'))
         mean_uvs_2d = pickle.load(open('./static/data/mean_uvs_2d_all.pkl', 'rb'))
         # categories = pickle.load(open('./static/data/categories.pkl', 'rb')).tolist()
 
-        df_users = pd.read_csv('./static/data/df_users.csv')
+        df_users = pd.read_csv('./static/data/df_users_240709_w_good_data_w_cls.csv')
         # nan_df = np.where(np.asanyarray(np.isnan(df_users)))
-        # row_idx_w_null = df_users.loc[pd.isna(df_users).any(axis=1), :].index.values
+        row_idx_w_null = df_users.loc[pd.isna(df_users).any(axis=1), :].index.values
         # df_users = df_users.loc[~df_users.index.isin(row_idx_w_null)].reset_index(drop=True)
-        # actual_uvs = np.delete(actual_uvs, row_idx_w_null, 0)
-        # pred_uvs = np.delete(pred_uvs, row_idx_w_null, 0)
+        actual_uvs = np.delete(actual_uvs, row_idx_w_null, 0)
+        pred_uvs = np.delete(pred_uvs, row_idx_w_null, 0)
 
         # pred_arith_mean_uv_2d = mean_uvs_2d[0]
         # print('pred_arith_mean_uv_2d: ', pred_arith_mean_uv_2d)
@@ -85,8 +85,9 @@ class LoadData(APIView):
 
         return Response({
             'users': df_users.to_dict(orient='records'),
-            # 'predUVs': pred_uvs,
-            # 'actualUVs': actual_uvs,
+            'predUVs': np.round(pred_uvs, 2),
+            'actualUVs': np.round(actual_uvs, 2),
+            'categories': categories
             # 'meanUV': pred_arith_mean_uv_2d.flatten().tolist(),
             # 'protos': df_users.to_dict(orient='records')
             # 'cfIdx': cf_indices
